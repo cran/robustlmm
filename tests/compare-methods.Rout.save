@@ -1,0 +1,471 @@
+
+R version 2.15.2 (2012-10-26) -- "Trick or Treat"
+Copyright (C) 2012 The R Foundation for Statistical Computing
+ISBN 3-900051-07-0
+Platform: i386-w64-mingw32/i386 (32-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> ## test that should make sure that the results remain constant
+> require(robustlmm)
+Loading required package: robustlmm
+Loading required package: nlme
+Loading required package: lme4
+Loading required package: Matrix
+Loading required package: lattice
+
+Attaching package: 'lme4'
+
+The following object(s) are masked from 'package:nlme':
+
+    VarCorr, lmList
+
+The following object(s) are masked from 'package:stats':
+
+    AIC, BIC
+
+Loading required package: MatrixModels
+Loading required package: robustbase
+Loading required package: stats4
+
+Attaching package: 'robustlmm'
+
+The following object(s) are masked from 'package:lme4':
+
+    VarCorr, fixef, getME, sigma
+
+> 
+> fit <- function(formula, data, methods =  c("DASvar", "DAStau"),
++                 rho.e = cPsi, rho.b = cPsi, ...) {
++     fits <- list()
++     ## compare with result of lmer if rho arguments are not given
++     classic <- ! any(c("rho.e", "rho.b") %in% names(match.call())[-1])
++     if (classic) fm <- lmer(formula, data)
++     for (method in methods) {
++         fits[[method]] <- list()
++         if (classic) fits[[method]][["lmer"]] <- fm
++         cat("\n########", method, "########\n")
++         try({cat("Time elapsed:",
++                  system.time(m <- rlmer(formula, data, method=method,
++                                         rho.e = rho.e, rho.b = rho.b, ...)),
++                  "\n")
++              fits[[method]][["IRWLS"]] <- m
++              print(m)
++              print(robustlmm:::u.rlmerMod(m), 4)
++              if (classic) {
++                  ## compare with lmer fit
++                  cat("#### Checking equality with lmer... ####\n")
++                  cat("Fixed effects: ", all.equal(fixef(fm), fixef(m), tol = 1e-4), "\n")
++                  cat("Random effects:", all.equal(ranef(fm), ranef(m), tol = 1e-4, check.attr=FALSE), "\n")
++                  cat("Theta:         ", all.equal(theta(fm), theta(m), tol = 1e-4), "\n")
++                  cat("Sigma:         ", all.equal(sigma(fm), sigma(m), 1e-4), "\n")
++                  if (packageVersion("lme4") >= "0.99999911.0") {
++                      tmp <- all.equal(fm@pp$unsc(), unname(m@pp$unsc()), tol = 1e-4)
++                      if (!isTRUE(tmp))
++                          cat("Unsc:          ", tmp , "\n")
++                  }
++              }
++          })
++         fits[[method]][["dnames"]] <- names(fits[[method]])
++     }
++     cat("\n################################################\n")
++     cat("################################################\n")
++     cat("################################################\n")
++     for (method in methods) {
++         cat("\n################ results for",method," ##############\n")
++         cmp <- do.call(compare, fits[[method]])
++         cmp <- cmp[grep("^rho", rownames(cmp), invert=TRUE),,drop=FALSE]
++         print.default(cmp, quote="FALSE")
++     }
++ }
+> 
+> if (FALSE) {
++     ## classic (REML)
++     fit(Yield ~ (1 | Batch), Dyestuff)
++     fit(Yield ~ (1 | Batch), Dyestuff2)
++     fit(diameter ~ (1|plate) + (1|sample), Penicillin)
++ 
++     ## classic (no init)
++     fit(Yield ~ (1 | Batch), Dyestuff, init = lmerNoFit)
++     fit(Yield ~ (1 | Batch), Dyestuff2, init = lmerNoFit)
++     fit(diameter ~ (1|plate) + (1|sample), Penicillin, init = lmerNoFit)
++ 
++     ## smoothPsi, wExp = 1
++     fit(Yield ~ (1 | Batch), Dyestuff,
++         rho.e = smoothPsi, rho.b = smoothPsi,
++         rho.sigma.b = smoothPsi, rho.sigma.e = smoothPsi)
++     fit(Yield ~ (1 | Batch), Dyestuff2,
++         rho.e = smoothPsi, rho.b = smoothPsi,
++         rho.sigma.b = smoothPsi, rho.sigma.e = smoothPsi)
++     fit(diameter ~ (1|plate) + (1|sample), Penicillin,
++         rho.e = smoothPsi, rho.b = smoothPsi,
++         rho.sigma.b = smoothPsi, rho.sigma.e = smoothPsi)
++ 
++     ## smoothPsi Proposal II for estimating sigma only
++     fit(Yield ~ (1 | Batch), Dyestuff,
++         rho.e = smoothPsi, rho.b = smoothPsi,
++         rho.sigma.b = smoothPsi)
++     fit(Yield ~ (1 | Batch), Dyestuff2,
++         rho.e = smoothPsi, rho.b = smoothPsi,
++         rho.sigma.b = smoothPsi)
++     fit(diameter ~ (1|plate) + (1|sample), Penicillin,
++         rho.e = smoothPsi, rho.b = smoothPsi,
++         rho.sigma.b = smoothPsi)
++ }
+> 
+> ## smoothPsi Proposal II (default)
+> fit(Yield ~ (1 | Batch), Dyestuff,
++     rho.e = smoothPsi, rho.b = smoothPsi)
+
+######## DASvar ########
+Note: Method with signature 'dsparseMatrix#dgeMatrix' chosen for function 'crossprod',
+ target signature 'dsCMatrix#dgeMatrix'.
+ "CsparseMatrix#ddenseMatrix" would also be valid
+Time elapsed: 3.76 0.03 3.79 NA NA 
+Robust linear mixed model fit by DASvar 
+Formula: formula 
+   Data: data 
+
+Random effects:
+ Groups   Name        Variance Std.Dev.
+ Batch    (Intercept) 2184     46.73   
+ Residual             2933     54.16   
+Number of obs: 30, groups: Batch, 6
+
+Fixed effects:
+            Estimate Std. Error t value
+(Intercept)  1526.82      21.61   70.65
+
+Robustness weights for the residuals: 
+ 25 weights are ~= 1. The remaining 5 ones are
+    2     3     5    18    23 
+0.988 0.988 0.984 0.770 0.988 
+
+Robustness weights for the random effects: 
+[1] 1.000 1.000 1.000 1.000 0.999 1.000
+
+Rho functions used for fitting:
+  Residuals:
+    eff: smoothed Huber (k = 1.345, s = 10) 
+    sig: smoothed Huber, Proposal II (k = 1.345, s = 10) 
+  Random Effects, variance component 1 (Batch):
+    eff: smoothed Huber (k = 1.345, s = 10) 
+    vcp: smoothed Huber, Proposal II (k = 1.345, s = 10) 
+[1] -19.822   1.081  33.966 -30.283  67.013 -51.900
+
+######## DAStau ########
+Time elapsed: 2.14 0 2.14 NA NA 
+Robust linear mixed model fit by DAStau 
+Formula: formula 
+   Data: data 
+
+Random effects:
+ Groups   Name        Variance Std.Dev.
+ Batch    (Intercept) 2400     48.99   
+ Residual             3084     55.54   
+Number of obs: 30, groups: Batch, 6
+
+Fixed effects:
+            Estimate Std. Error t value
+(Intercept)  1526.85      22.57   67.66
+
+Robustness weights for the residuals: 
+ 25 weights are ~= 1. The remaining 5 ones are
+    2     3     5    18    23 
+0.997 0.997 0.993 0.790 0.995 
+
+Robustness weights for the random effects: 
+[1] 1 1 1 1 1 1
+
+Rho functions used for fitting:
+  Residuals:
+    eff: smoothed Huber (k = 1.345, s = 10) 
+    sig: smoothed Huber, Proposal II (k = 1.345, s = 10) 
+  Random Effects, variance component 1 (Batch):
+    eff: smoothed Huber (k = 1.345, s = 10) 
+    vcp: smoothed Huber, Proposal II (k = 1.345, s = 10) 
+[1] -19.73   1.04  33.50 -29.59  66.03 -51.26
+
+################################################
+################################################
+################################################
+
+################ results for DASvar  ##############
+                    IRWLS      
+Coef                           
+(Intercept)         1527 (21.6)
+                               
+VarComp                        
+(Intercept) | Batch 46.7       
+                               
+sigma               54.2       
+                               
+
+################ results for DAStau  ##############
+                    IRWLS      
+Coef                           
+(Intercept)         1527 (22.6)
+                               
+VarComp                        
+(Intercept) | Batch 49         
+                               
+sigma               55.5       
+                               
+> fit(Yield ~ (1 | Batch), Dyestuff2,
++     rho.e = smoothPsi, rho.b = smoothPsi)
+
+######## DASvar ########
+Time elapsed: 2.47 0 2.46 NA NA 
+Robust linear mixed model fit by DASvar 
+Formula: formula 
+   Data: data 
+
+Random effects:
+ Groups   Name        Variance Std.Dev.
+ Batch    (Intercept)  0.00    0.000   
+ Residual             16.02    4.002   
+Number of obs: 30, groups: Batch, 6
+
+Fixed effects:
+            Estimate Std. Error t value
+(Intercept)   5.6087     0.6777   8.276
+
+Robustness weights for the residuals: 
+ 24 weights are ~= 1. The remaining 6 ones are
+    8     9    10    11    13    21 
+0.997 0.863 0.824 0.951 0.687 0.971 
+
+Robustness weights for the random effects: 
+[1] 1 1 1 1 1 1
+
+Rho functions used for fitting:
+  Residuals:
+    eff: smoothed Huber (k = 1.345, s = 10) 
+    sig: smoothed Huber, Proposal II (k = 1.345, s = 10) 
+  Random Effects, variance component 1 (Batch):
+    eff: smoothed Huber (k = 1.345, s = 10) 
+    vcp: smoothed Huber, Proposal II (k = 1.345, s = 10) 
+[1] 0 0 0 0 0 0
+
+######## DAStau ########
+Time elapsed: 2.5 0 2.49 NA NA 
+Robust linear mixed model fit by DAStau 
+Formula: formula 
+   Data: data 
+
+Random effects:
+ Groups   Name        Variance Std.Dev.
+ Batch    (Intercept)  0.00    0.000   
+ Residual             16.19    4.023   
+Number of obs: 30, groups: Batch, 6
+
+Fixed effects:
+            Estimate Std. Error t value
+(Intercept)   5.6082     0.6813   8.232
+
+Robustness weights for the residuals: 
+ 24 weights are ~= 1. The remaining 6 ones are
+    8     9    10    11    13    21 
+0.999 0.867 0.828 0.955 0.691 0.974 
+
+Robustness weights for the random effects: 
+[1] 1 1 1 1 1 1
+
+Rho functions used for fitting:
+  Residuals:
+    eff: smoothed Huber (k = 1.345, s = 10) 
+    sig: smoothed Huber, Proposal II (k = 1.345, s = 10) 
+  Random Effects, variance component 1 (Batch):
+    eff: smoothed Huber (k = 1.345, s = 10) 
+    vcp: smoothed Huber, Proposal II (k = 1.345, s = 10) 
+[1] 0 0 0 0 0 0
+
+################################################
+################################################
+################################################
+
+################ results for DASvar  ##############
+                    IRWLS       
+Coef                            
+(Intercept)         5.61 (0.678)
+                                
+VarComp                         
+(Intercept) | Batch 0           
+                                
+sigma               4           
+                                
+
+################ results for DAStau  ##############
+                    IRWLS       
+Coef                            
+(Intercept)         5.61 (0.681)
+                                
+VarComp                         
+(Intercept) | Batch 0           
+                                
+sigma               4.02        
+                                
+> fit(diameter ~ (1|plate) + (1|sample), Penicillin,
++     rho.e = smoothPsi, rho.b = smoothPsi)
+
+######## DASvar ########
+Time elapsed: 3.51 0 3.51 NA NA 
+Robust linear mixed model fit by DASvar 
+Formula: formula 
+   Data: data 
+
+Random effects:
+ Groups   Name        Variance Std.Dev.
+ plate    (Intercept) 0.8798   0.9380  
+ sample   (Intercept) 4.3155   2.0774  
+ Residual             0.2954   0.5435  
+Number of obs: 144, groups: plate, 24; sample, 6
+
+Fixed effects:
+            Estimate Std. Error t value
+(Intercept)  23.0116     0.8927   25.78
+
+Robustness weights for the residuals: 
+ 122 weights are ~= 1. The remaining 22 ones are summarized as
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+  0.392   0.669   0.843   0.822   0.978   0.999 
+
+Robustness weights for the random effects: 
+ 25 weights are ~= 1. The remaining 5 ones are
+    7    13    19    24    30 
+0.893 0.853 0.893 0.982 0.905 
+
+Rho functions used for fitting:
+  Residuals:
+    eff: smoothed Huber (k = 1.345, s = 10) 
+    sig: smoothed Huber, Proposal II (k = 1.345, s = 10) 
+  Random Effects, variance component 1 (plate):
+    eff: smoothed Huber (k = 1.345, s = 10) 
+    vcp: smoothed Huber, Proposal II (k = 1.345, s = 10) 
+  Random Effects, variance component 2 (sample):
+    eff: smoothed Huber (k = 1.345, s = 10) 
+    vcp: smoothed Huber, Proposal II (k = 1.345, s = 10) 
+ [1]  4.436e-01  4.436e-01  1.241e-01  2.030e-01 -1.084e-06 -2.536e-01
+ [7] -8.075e-01  4.872e-01 -4.441e-01 -4.541e-01  5.688e-01  2.945e-01
+[13]  8.498e-01  2.945e-01  5.481e-01  2.012e-02 -1.615e-01 -1.623e-01
+[19] -8.075e-01  5.688e-01 -4.951e-01 -1.628e-01 -4.495e-01 -7.084e-01
+[25]  5.551e-01 -2.672e-01  4.955e-01 -3.700e-02 -2.667e-02 -7.956e-01
+
+######## DAStau ########
+Time elapsed: 2.39 0 2.38 NA NA 
+Robust linear mixed model fit by DAStau 
+Formula: formula 
+   Data: data 
+
+Random effects:
+ Groups   Name        Variance Std.Dev.
+ plate    (Intercept) 0.9070   0.9523  
+ sample   (Intercept) 4.5788   2.1398  
+ Residual             0.3148   0.5611  
+Number of obs: 144, groups: plate, 24; sample, 6
+
+Fixed effects:
+            Estimate Std. Error t value
+(Intercept)  22.9981     0.9189   25.03
+
+Robustness weights for the residuals: 
+ 126 weights are ~= 1. The remaining 18 ones are summarized as
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+  0.406   0.688   0.843   0.806   0.925   0.998 
+
+Robustness weights for the random effects: 
+ 25 weights are ~= 1. The remaining 5 ones are
+    7    13    19    24    30 
+0.907 0.867 0.907 0.989 0.930 
+
+Rho functions used for fitting:
+  Residuals:
+    eff: smoothed Huber (k = 1.345, s = 10) 
+    sig: smoothed Huber, Proposal II (k = 1.345, s = 10) 
+  Random Effects, variance component 1 (plate):
+    eff: smoothed Huber (k = 1.345, s = 10) 
+    vcp: smoothed Huber, Proposal II (k = 1.345, s = 10) 
+  Random Effects, variance component 2 (sample):
+    eff: smoothed Huber (k = 1.345, s = 10) 
+    vcp: smoothed Huber, Proposal II (k = 1.345, s = 10) 
+ [1]  0.4530635  0.4530635  0.1294168  0.2063492  0.0005221 -0.2576518
+ [7] -0.8188377  0.4921255 -0.4483654 -0.4579115  0.5776317  0.2991698
+[13]  0.8623734  0.2991698  0.5562837  0.0207079 -0.1646226 -0.1649214
+[19] -0.8188377  0.5776317 -0.5034310 -0.1649334 -0.4530078 -0.7202631
+[25]  0.5602820 -0.2652057  0.4998466 -0.0334560 -0.0229158 -0.7941243
+
+################################################
+################################################
+################################################
+
+################ results for DASvar  ##############
+                     IRWLS     
+Coef                           
+(Intercept)          23 (0.893)
+                               
+VarComp                        
+(Intercept) | plate  0.938     
+(Intercept) | sample 2.077     
+                               
+sigma                0.543     
+                               
+
+################ results for DAStau  ##############
+                     IRWLS     
+Coef                           
+(Intercept)          23 (0.919)
+                               
+VarComp                        
+(Intercept) | plate  0.952     
+(Intercept) | sample 2.140     
+                               
+sigma                0.561     
+                               
+> 
+> if (FALSE) {
++     ## correlated random effects
++     fit(Reaction ~ Days + (Days|Subject), sleepstudy,
++         methods = c("DASvar", "DAStau"))
++     fit(Reaction ~ Days + (Days|Subject), sleepstudy,
++         methods = c("DASvar", "DAStau"), init = lmerNoFit)
++     ## robust
++     fit(Reaction ~ Days + (Days|Subject), sleepstudy,
++         rho.e = smoothPsi, rho.b = smoothPsi,
++         methods = c("DASvar")) ##, "DAStau"))
++     fit(Reaction ~ Days + (Days|Subject), sleepstudy,
++         rho.e = smoothPsi, rho.b = smoothPsi,
++         methods = c("DASvar"), ##, "DAStau"),
++         init = lmerNoFit)
++ 
++     ## ## including a 0 variance compontent
++     sleepstudy2 <- within(sleepstudy, Group <- letters[1:4])
++     fit(Reaction ~ Days + (Days|Subject) + (1|Group), sleepstudy2,
++         methods = c("DASvar", "DAStau"))
++     fit(Reaction ~ Days + (Days|Subject) + (1|Group), sleepstudy2,
++         methods = c("DASvar", "DAStau"), init = lmerNoFit)
++     ## robust
++     fit(Reaction ~ Days + (Days|Subject) + (1|Group), sleepstudy2,
++         rho.e = smoothPsi, rho.b = smoothPsi,
++         methods = c("DASvar")) ##, "DAStau"))
++     fit(Reaction ~ Days + (Days|Subject) + (1|Group), sleepstudy2,
++         rho.e = smoothPsi, rho.b = smoothPsi,
++         methods = c("DASvar"), ##, "DAStau"),
++         init = lmerNoFit)
++ }
+> 
+> cat('Time elapsed: ', proc.time(),'\n') # for ``statistical reasons''
+Time elapsed:  20.6 0.18 20.78 NA NA 
+> 
+> proc.time()
+   user  system elapsed 
+  20.60    0.18   20.78 
