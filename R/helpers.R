@@ -252,9 +252,9 @@ findBlocks <- function(obj, Lambdat=obj$Lambdat(), Lind=obj$Lind) {
         }
     }
     ## robustness weights
-    robustbase:::summarizeRobWeights(so$wgt.e, digits=3,
+    summarizeRobWeights(so$wgt.e, digits=3,
                                      header="\nRobustness weights for the residuals:")
-    robustbase:::summarizeRobWeights(so$wgt.b, digits=3,
+    summarizeRobWeights(so$wgt.b, digits=3,
                                      header="\nRobustness weights for the random effects:")
     ## rho functions
     cat("\nRho functions used for fitting:\n")
@@ -394,7 +394,7 @@ getInfo.rlmerMod <- function(object, ...) {
     linfo
 }
 
-##' Compare the fits of multiple lmerMod or rlmerMod objects
+##' Compare the fits of multiple lmerMod or rlmerMod objects.
 ##'
 ##' @title Create a comparison chart for multiple fits
 ##' @param ... objects to compare
@@ -402,6 +402,11 @@ getInfo.rlmerMod <- function(object, ...) {
 ##' @param dnames names of objects given as arguments (optional)
 ##' @param show.rho.functions whether to show rho functions in output.
 ##' @return comparison table
+##' @seealso \code{\link{xtable.comparison.table}}
+##' @examples
+##' fm1 <- lmer(Yield ~ (1|Batch), Dyestuff)
+##' fm2 <- rlmer(Yield ~ (1|Batch), Dyestuff)
+##' compare(fm1, fm2)
 ##' @export
 compare <- function(..., digits = 3, dnames = NULL,
                     show.rho.functions = TRUE) {
@@ -488,7 +493,7 @@ print.comparison.table <- function(x, ...) {
     print(x, ..., quote=FALSE)
 }
 
-##' @title Create Latex and HTML tables for \code{compare} output
+##' @title Create Latex and HTML tables for output of \code{\link{compare}()}.
 ##'
 ##' This function is a wrapper to \code{table} for objects of class
 ##' \code{comparison.table}. It uses the same arguments as \code{xtable()}. 
@@ -500,13 +505,17 @@ print.comparison.table <- function(x, ...) {
 ##' @param display see \code{\link{xtable}}.
 ##' @param ... passed to \code{\link{xtable}}.
 ##' @seealso \code{\link{xtable}}, \code{\link{print.xtable.comparison.table}}
-##'   and \code{link{compare}}.
+##'   and \code{\link{compare}}.
+##' @examples
+##' fm1 <- lmer(Yield ~ (1|Batch), Dyestuff)
+##' fm2 <- rlmer(Yield ~ (1|Batch), Dyestuff)
+##' require(xtable)
+##' xtable(compare(fm1, fm2))
 ##' @importFrom xtable xtable
 ##' @export
 ##' @method xtable comparison.table
 xtable.comparison.table <- function(x, caption=NULL, label=NULL, align=NULL,
                                     digits=NULL, display=NULL, ...) {
-    require(xtable)
     rn <- sapply(rownames(x), function(n) {
         switch(n,
                Coef="Coefficients (Std. Error)",
@@ -534,17 +543,18 @@ xtable.comparison.table <- function(x, caption=NULL, label=NULL, align=NULL,
 ##' @param latexify.namescol replace \dQuote{sigma} and \dQuote{x} in
 ##'   the first column by latex equivalents.
 ##' @param include.rownames include row numbers (names are included in
-##'   the first column returned by \code{xtable.comparison.table}).
+##'   the first column returned by\\ \code{xtable.comparison.table}).
 ##' @param ... passed to \code{\link{print.xtable}}.
 ##' @importFrom xtable print.xtable
 ##' @seealso \code{\link{print.xtable}}, \code{\link{xtable.comparison.table}},
 ##'  and \code{\link{compare}}.
+##' @examples
+##' ## see example in ?xtable.comparison.table
 ##' @method print xtable.comparison.table
 ##' @export
 print.xtable.comparison.table <- function(x, add.hlines=TRUE,
                                           latexify.namescol=TRUE,
                                           include.rownames=FALSE, ...) {
-    require(xtable)
     args <- list(...)
     if (add.hlines) {
         rns <- if (is.factor(x[[1]])) levels(x[[1]])[x[[1]]] else x[[1]]

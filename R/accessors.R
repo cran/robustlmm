@@ -56,6 +56,9 @@ rho.b <- function(object, which = "default") {
 ##'
 ##' @title Get theta
 ##' @param object merMod object
+##' @examples
+##' fm <- rlmer(Yield ~ (1|Batch), Dyestuff)
+##' stopifnot(all.equal(theta(fm), getME(fm, "theta")))
 ##' @export
 theta <- function(object) {
     if (is(object, "rlmerMod")) {
@@ -154,8 +157,12 @@ nobs.rlmerMod <- .nobsLmerMod
 ##' @param object rlmerMod object
 ##' @param type type of residuals
 ##' @param ... ignored
+##' @examples
+##' fm <- rlmer(Yield ~ (1|Batch), Dyestuff)
+##' stopifnot(all.equal(resid(fm, type="weighted"),
+##'                     resid(fm) * getME(fm, "w_e")))
 ##' @method residuals rlmerMod
-##' @importFrom MatrixModels residuals resid
+##' @importFrom stats residuals resid
 ##' @S3method residuals rlmerMod
 residuals.rlmerMod <- function(object, type = c("response", "weighted"), ...) {
     type <- match.arg(type)
@@ -190,7 +197,7 @@ deviance.rlmerMod <- .deviance
     ## Author: Manuel Koller, Date: 11 Apr 2011, 11:40
 
     ## FIXME: ?? offset will be added in updateMu
-    drop((crossprod(object@pp$Zt, object@pp$b))@x + (object@pp$X %*% object@pp$beta))
+    drop(crossprod(object@pp$Zt, object@pp$b) + (object@pp$X %*% object@pp$beta))
 }
 
 ### Get fixed effects
@@ -264,13 +271,12 @@ uArranged <- function(object, b.s = b.s(object)) {
 ##'
 ##' Extract (or \dQuote{get}) \dQuote{components} -- in a generalized
 ##' sense -- from a fitted mixed-effects model, i.e. from an object
-##' of class \code{"\linkS4class{rlmerMod}"} or \code{"\linkS4class{merMod}"}.
+##' of class \code{"\linkS4class{rlmerMod}"} or \code{"\linkS4class{mer}"}.
 ##'
 ##' The goal is to provide \dQuote{everything a user may want} from a fitted
 ##' \code{"rlmerMod"} object \emph{as far} as it is not available by methods, such
 ##' as \code{\link{fixef}}, \code{\link{ranef}}, \code{\link{vcov}}, etc.
 ##'
-##' @aliases getME getL getL,merMod-method
 ##' @param object a fitted mixed-effects model of class
 ##' \code{"\linkS4class{rlmerMod}"}, i.e. typically the result of
 ##' \code{\link{rlmer}()}.
@@ -321,7 +327,9 @@ uArranged <- function(object, b.s = b.s(object)) {
 ##' ## shows many methods you should consider *before* using getME():
 ##' methods(class = "rlmerMod")
 ##'
-##' (fm1 <- rlmer(Reaction ~ Days + (Days|Subject), sleepstudy, method="DASvar"))
+##' ## doFit = FALSE to speed up example
+##' (fm1 <- rlmer(Reaction ~ Days + (Days|Subject), sleepstudy,
+##'               method="DASvar", doFit=FALSE))
 ##' Z <- getME(fm1, "Z")
 ##' stopifnot(is(Z, "CsparseMatrix"),
 ##'           c(180,36) == dim(Z),

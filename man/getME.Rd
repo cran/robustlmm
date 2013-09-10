@@ -66,7 +66,7 @@
   \code{\link{ranef}()}} \item{w_sigma_b_vector}{robustness
   weights associated with the spherical random effects when
   estimating the covariance parameters, returned as one
-  long vector} } }
+  long vector} }}
 }
 \value{
   Unspecified, as very much depending on the
@@ -90,7 +90,9 @@
 ## shows many methods you should consider *before* using getME():
 methods(class = "rlmerMod")
 
-(fm1 <- rlmer(Reaction ~ Days + (Days|Subject), sleepstudy, method="DASvar"))
+## doFit = FALSE to speed up example
+(fm1 <- rlmer(Reaction ~ Days + (Days|Subject), sleepstudy,
+              method="DASvar", doFit=FALSE))
 Z <- getME(fm1, "Z")
 stopifnot(is(Z, "CsparseMatrix"),
           c(180,36) == dim(Z),

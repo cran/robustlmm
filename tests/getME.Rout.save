@@ -33,9 +33,7 @@ The following object is masked from 'package:stats':
 
     AIC, BIC
 
-Loading required package: MatrixModels
 Loading required package: robustbase
-Loading required package: stats4
 
 Attaching package: 'robustlmm'
 
@@ -378,4 +376,4 @@ Name: w_sigma_b_vector
 > 
 > proc.time()
    user  system elapsed 
-  6.127   0.132   6.257 
+  4.949   0.103   5.045 
