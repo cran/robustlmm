@@ -2,6 +2,7 @@
 ##' @exportClass psi_func_cached
 setClass("psi_func_cached", contains = c("psi_func"))
 
+##' @importFrom Matrix bdiag
 
 ## This is basically a copy of the merPredD-class
 ##
@@ -282,9 +283,11 @@ setRefClass("rlmerPredD",
                          if (set.unsc) return(cache.unsc)
                          r <- M()
                          tmp <- if (all(zeroB)) { ## all theta == 0
-                             Epsi2_e * tcrossprod(solve(M_XX, t(sqrtD_e %*% .U_eX)))
+                             Epsi2_e / rho_e@EDpsi() *
+                                 tcrossprod(solve(M_XX, t(sqrtD_e %*% .U_eX)))
                          } else {
-                             Epsi2_e * with(r, M_BB - crossprod(M_bB, Lambda_bD_b %*% M_bB)) +
+                             Epsi2_e / rho_e@EDpsi() *
+                                 with(r, M_BB - crossprod(M_bB, Lambda_bD_b %*% M_bB)) +
                                  if (isDiagonal(U_b)) {
                                      crossprod(Diagonal(x=sqrt(Epsi2_b)) %*% Lambda_b %*% r$M_bB)
                                  } else {
@@ -297,12 +300,12 @@ setRefClass("rlmerPredD",
                          ## if its almost symmetric, then return symmetrized matrix
                          ## otherwise summary.merMod() and chol() will complain.
                          if (!isSymmetric(cache.unsc, 0)) {
-                             ## warn if default isSymmetric fails
-                             if (!isSymmetric(cache.unsc)) {
-                                 tol <- eval(formals(isSymmetric.matrix)$tol)
-                                 warning("isSymmetric() failed: ",
-                                         all.equal(cache.unsc, t(cache.unsc), tolerance=tol))
-                             }
+                             ## ## warn if default isSymmetric fails
+                             ## if (!isSymmetric(cache.unsc)) {
+                             ##     tol <- eval(formals(isSymmetric.matrix)$tol)
+                             ##     warning("isSymmetric() failed: ",
+                             ##             all.equal(cache.unsc, t(cache.unsc), tolerance=tol))
+                             ## }
                              cache.unsc <<- symmpart(cache.unsc)
                          }
                          set.unsc <<- TRUE
@@ -434,7 +437,6 @@ setRefClass("rlmerResp",
 ##' Class "rlmerMod" of Robustly Fitted Mixed-Effect Models
 ##'
 ##' A robust mixed-effects model as returned by \code{\link{rlmer}}.
-##'
 ##' @name rlmerMod-class
 ##' @aliases rlmerMod-class
 ##' show,rlmerMod-method
@@ -454,6 +456,12 @@ setRefClass("rlmerResp",
 ##'
 ##' showClass("rlmerMod")
 ##'
+##' ## convert an object of type 'lmerMod' to 'rlmerMod'
+##' ## to use the methods provided by robustlmm
+##' fm <- lmer(Yield ~ (1|Batch), Dyestuff)
+##' rfm <- as(fm, "rlmerMod")
+##' compare(fm, rfm)
+##' 
 ##' @export
 setClass("rlmerMod",
          representation(resp    = "rlmerResp",

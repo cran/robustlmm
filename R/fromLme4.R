@@ -9,7 +9,7 @@
 ## minimal changes: merMod -> rlmerMod
 ## plus some glue for mer objects, if required
 
-##' Extract the fixed-effects estimates
+##' Extract the fixed-effects estimates.
 ##'
 ##' Extract the estimates of the fixed-effects parameters from a fitted model.
 ##' @name fixef
@@ -23,7 +23,8 @@
 ##' @return a named, numeric vector of fixed-effects estimates.
 ##' @keywords models
 ##' @examples
-##' fixef(rlmer(Reaction ~ Days + (1|Subject) + (0+Days|Subject), sleepstudy))
+##' ## doFit = FALSE to speed up example
+##' fixef(rlmer(Reaction ~ Days + (Days|Subject), sleepstudy, doFit=FALSE))
 ##' @importFrom nlme fixef
 ##' @export fixef
 ##' @S3method fixef rlmerMod
@@ -94,10 +95,11 @@ mkVarCorr <- function(sc, cnms, nc, theta, nms) {
 
 ##' Extract variance and correlation components
 ##'
-##' This function calculates the estimated variances, standard deviations, and
-##' correlations between the random-effects terms in a mixed-effects model, of
-##' class \code{\linkS4class{merMod}} (linear, generalized or nonlinear).  The
-##' within-group error variance and standard deviation are also calculated.
+##' This function calculates the estimated variances, standard
+##' deviations, and correlations between the random-effects terms in a
+##' mixed-effects model, of class \code{\linkS4class{rlmerMod}}
+##' (linear, generalized or nonlinear).  The within-group error
+##' variance and standard deviation are also calculated.
 ##'
 ##' @name VarCorr
 ##' @aliases VarCorr VarCorr.rlmerMod

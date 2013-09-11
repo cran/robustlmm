@@ -1,8 +1,8 @@
 % -*- mode: noweb; noweb-default-code-mode: R-mode; -*-
 \documentclass[11pt, a4paper]{article}
 
-%\VignetteIndexEntry{robustlmm: Robust Estimating Equations and Examples}
-%\VignetteDepends{ggplot2, reshape2, xtable, robustlmm, digest}
+%\VignetteIndexEntry{Examples and some details on the method}
+%\VignetteDepends{ggplot2, reshape2, xtable, robustlmm, digest, robustbase, lme4}
 
 \usepackage[a4paper, text={16cm,25cm}]{geometry}
 \usepackage[utf8]{inputenc}
@@ -72,7 +72,7 @@
 
 %% Sweave stuff
 \usepackage{color}
-\usepackage{Sweave}
+\usepackage[noae]{Sweave}
 \definecolor{Sinput}{rgb}{0,0,0.56}
 \definecolor{Soutput}{rgb}{0.56,0,0}
 \DefineVerbatimEnvironment{Sinput}{Verbatim}{%
@@ -151,10 +151,10 @@ of mixed effects models in terms of spherical random effects,
 \end{equation}
 where $q$ is the number of random effects (the length of $\vbs$) and $n$ is
 the number of observations (length of $\vec y$). The vector $\vec\theta$
-parametrizes the lower triangular part $\Ubth$ of the Cholesky
+parameterizes the lower triangular part $\Ubth$ of the Cholesky
 decomposition of the covariance matrix of the random effects $\Vbth$, i.e.,
 $\Vbth = \Ubth\Ubth\tr$. We assume the random effects to be ordered in a
-way such that correlated random effects are grouped togheter. The
+way such that correlated random effects are grouped toghether. The
 covariance matrix $\Vbth$ is therefore block diagonal. We use the index $i$
 for observations, $j$ for random effects and $k$ for blocks of random
 effects. For notatinal simplicity, we assume that there is only one type of
@@ -355,10 +355,83 @@ $\Tbk$ such that each summand has expectation zero. For $l = 1, \dots, r$,
 \end{remarks}
 
 %% Initialize Sweave
-
-
+\SweaveOpts{prefix.string=figs/fig-ex, eps = FALSE, pdf = TRUE, strip.white=true, echo=FALSE}
+\SweaveOpts{width=6.66, height=4, include=FALSE}
 %\SweaveOpts{eval=FALSE}
 
+<<initialize>>=
+options(width=80,
+        str=strOptions(strict.width = "wrap", vec.len=3),
+        xtable.size="\\small")
+if (!file.exists("figs")) dir.create("figs")
+rlmerDoc <- system.file("doc", package="robustlmm")
+require(ggplot2)
+require(reshape2)
+source(file.path(rlmerDoc, "ggplot.theme.R"))
+require(xtable)
+require(robustlmm)
+require(robustbase)
+require(lme4)
+source(file.path(rlmerDoc, "plots.R"))
+## st: function that caches the results and returns the system.time
+require(digest)
+if (!file.exists("cache")) dir.create("cache")
+st <- function(expr, update.cache=FALSE) {
+    sexpr <- substitute(expr)
+    file <- file.path("cache", digest(sexpr, "sha1"))
+    if (file.exists(file) && !update.cache) {
+        pf <- parent.frame()
+        load(file, envir=pf)
+    } else {
+        ## do something similar as system.time
+        time <- proc.time()
+        expr
+        new.time <- proc.time()
+        elapsed.time <- new.time - time
+        ## save created object
+        save(list=c(as.character(sexpr[[2]]), "elapsed.time"), file=file)
+    }
+    structure(elapsed.time, class = "proc_time")
+}
+if(packageVersion("robustbase") >= "0.9-8")  {
+    lqqPsi <- psiFuncCached(rho = function(x, cc) Mpsi(x, cc, "lqq", -1),
+                            psi = function(x, cc) Mpsi(x, cc, "lqq", 0),
+                            Dpsi = function(x, cc) Mpsi(x, cc, "lqq", 1),
+                            wgt = function(x, cc) Mwgt(x, cc, "lqq"),
+                            Dwgt = function(x, cc) 
+                            (Mpsi(x, cc, "lqq", 1) - Mwgt(x, cc, "lqq"))/x,
+                            name = "lqq",
+                            cc = c(-0.5, 1.5, 0.95, NA))
+    
+    bisquarePsi <- psiFuncCached(rho = function(x, k) Mpsi(x, k, "biweight", -1),
+                                 psi = function(x, k) Mpsi(x, k, "biweight", 0),
+                                 Dpsi = function(x, k) Mpsi(x, k, "biweight", 1),
+                                 wgt = function(x, k) (1 - (x/k)^2)^2*(abs(x) <= k),
+                                 Dwgt = function(x, k) (-(4*(1-(x/k)^2))*x/k^2)*(abs(x) <= k),
+                                 name = "bisquare",
+                                 k = 4.68)
+} else {
+    lqqPsi <- psiFuncCached(rho = function(x, cc) robustbase:::lmrob.psifun(x, cc, "lqq", -1),
+                            psi = function(x, cc) robustbase:::lmrob.psifun(x, cc, "lqq", 0),
+                            Dpsi = function(x, cc) robustbase:::lmrob.psifun(x, cc, "lqq", 1),
+                            wgt = function(x, cc) robustbase:::lmrob.wgtfun(x, cc, "lqq"),
+                            Dwgt = function(x, cc) (robustbase:::lmrob.psifun(x, cc, "lqq", 1) -
+                                robustbase:::lmrob.wgtfun(x, cc, "lqq"))/x,
+                            name = "lqq",
+                            cc = c(-0.5, 1.5, 0.95, NA))
+    
+    bisquarePsi <- psiFuncCached(rho = function(x, k) tukeyPsi1(x, k, -1),
+                                 psi = function(x, k) tukeyPsi1(x, k, 0),
+                                 Dpsi = function(x, k) tukeyPsi1(x, k, 1),
+                                 wgt = function(x, k) (1 - (x/k)^2)^2*(abs(x) <= k),
+                                 Dwgt = function(x, k) (-(4*(1-(x/k)^2))*x/k^2)*(abs(x) <= k),
+                                 name = "bisquare",
+                                 k = 4.68)
+}
+## make the functions wgt.e and wgt.b accessible again...
+wgt.e <- robustlmm:::wgt.e
+wgt.b <- robustlmm:::wgt.b
+@
 
 \section{Penicillin Example}
 The dataset, shown in Figure~\ref{fig:penicillinRaw}, was originally
@@ -382,6 +455,21 @@ from an investigation to
 The datasets contains the measurements of $6$ samples and $24$ plates.
 
 \label{sec:penicillin}
+<<penicillin-setup>>=
+data(Penicillin)
+## setup datasets
+Penicillin <- within(Penicillin, {
+    plate <- reorder(plate, diameter)
+    attr(plate, "scores") <- NULL
+})
+<<penicillin-raw,fig=TRUE,height=3.2>>=
+print(ggplot(Penicillin, aes(plate, diameter, color = sample)) +
+      geom_point() + geom_line(aes(as.numeric(plate))) +
+      scale_colour_brewer("Sample", palette="Dark2") +
+      scale_y_continuous(breaks=c(18,20,22,24,26)) +
+      xlab("Plate") + ylab("Diameter growth inhibition zone (mm)") +
+      theme(legend.position = "bottom", legend.box = "horizontal"))
+@
 
 \begin{figure}[htbp]
   \centering
@@ -397,17 +485,9 @@ The raw data for the Penicillin example is shown in
 Figure~\ref{fig:penicillinRaw}.  In \Rp, the data is provided as part of
 the \Rp package ``lme4''. It is a data.frame with three columns:
 
-\begin{Schunk}
-\begin{Sinput}
-> str(Penicillin)
-\end{Sinput}
-\begin{Soutput}
-'data.frame':	144 obs. of  3 variables:
-$ diameter: num 27 23 26 23 23 21 27 23 ...
-$ plate : Factor w/ 24 levels "g","s","x","u",..: 18 18 18 18 18 18 19 19 ...
-$ sample : Factor w/ 6 levels "A","B","C","D",..: 1 2 3 4 5 6 1 2 ...
-\end{Soutput}
-\end{Schunk}
+<<penicillin-str,echo=TRUE>>=
+str(Penicillin)
+@
 
 The column ``diameter'' is the response and the two factors ``plate'' and
 ``sample'' indicate where the observation was measured. As
@@ -421,18 +501,13 @@ covariables from the grouping variable. In this case, we only have a random
 intercept ``1'' that varies by group ``plate'' and ``sample'',
 respectively.
 
-\begin{Schunk}
-\begin{Sinput}
-> st(classical <- lmer(diameter ~ 1 + (1|plate) + (1|sample),
-+                      Penicillin))
-\end{Sinput}
-\end{Schunk}
-\begin{Schunk}
-\begin{Soutput}
-   user  system elapsed 
-  0.098   0.002   0.099 
-\end{Soutput}
-\end{Schunk}
+<<penicillin-lmer,echo=TRUE,eval=FALSE>>=
+st(classical <- lmer(diameter ~ 1 + (1|plate) + (1|sample),
+                     Penicillin))
+<<penicillin-lmer2,echo=FALSE>>=
+st(classical <- lmer(diameter ~ 1 + (1|plate) + (1|sample),
+                     Penicillin), update.cache=TRUE)
+@
 
 
 
@@ -449,57 +524,12 @@ components are estimated with an efficiency of about $95\%$. One can do this
 with one call to the function ``psi2propII''. Afterwards, we have a look
 at the summary of the fitted object
 
-\begin{Schunk}
-\begin{Sinput}
-> st(robust <- rlmer(diameter ~ 1 + (1|plate) + (1|sample), Penicillin,
-+                    rho.sigma.e = psi2propII(smoothPsi, k = 2.28),
-+                    rho.sigma.b = psi2propII(smoothPsi, k = 2.28)))
-\end{Sinput}
-\begin{Soutput}
-   user  system elapsed 
- 10.235   0.089  10.346 
-\end{Soutput}
-\begin{Sinput}
-> summary(robust)
-\end{Sinput}
-\begin{Soutput}
-Robust linear mixed model fit by DAStau 
-Formula: diameter ~ 1 + (1 | plate) + (1 | sample) 
-   Data: Penicillin 
-
-Random effects:
- Groups   Name        Variance Std.Dev.
- plate    (Intercept) 0.7582   0.8707  
- sample   (Intercept) 3.8865   1.9714  
- Residual             0.2997   0.5475  
-Number of obs: 144, groups: plate, 24; sample, 6
-
-Fixed effects:
-            Estimate Std. Error t value
-(Intercept)  23.0419     0.8464   27.22
-
-Robustness weights for the residuals: 
- 124 weights are ~= 1. The remaining 20 ones are summarized as
-   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-  0.397   0.670   0.837   0.809   0.955   0.993 
-
-Robustness weights for the random effects: 
- 25 weights are ~= 1. The remaining 5 ones are
-    1     2     3    24    30 
-0.836 0.836 0.938 0.802 0.858 
-
-Rho functions used for fitting:
-  Residuals:
-    eff: smoothed Huber (k = 1.345, s = 10) 
-    sig: smoothed Huber, Proposal II (k = 2.28, s = 10) 
-  Random Effects, variance component 1 (plate):
-    eff: smoothed Huber (k = 1.345, s = 10) 
-    vcp: smoothed Huber, Proposal II (k = 2.28, s = 10) 
-  Random Effects, variance component 2 (sample):
-    eff: smoothed Huber (k = 1.345, s = 10) 
-    vcp: smoothed Huber, Proposal II (k = 2.28, s = 10) 
-\end{Soutput}
-\end{Schunk}
+<<penicillin-rlmer,echo=TRUE>>=
+st(robust <- rlmer(diameter ~ 1 + (1|plate) + (1|sample), Penicillin,
+                   rho.sigma.e = psi2propII(smoothPsi, k = 2.28),
+                   rho.sigma.b = psi2propII(smoothPsi, k = 2.28)))
+summary(robust)
+@
 
 The first half of the summary shows information about the model that was
 fitted and displays the parameter estimates including standard errors for
@@ -526,44 +556,30 @@ $\psi$-functions used for the variance components as shown in the summary
 output. The call to fit a model that does uses the classical estimates for
 the ``sample'' variance components is as follows.
 
-\begin{Schunk}
-\begin{Sinput}
-> st(robust2 <- rlmer(diameter ~ 1 + (1|plate) + (1|sample), Penicillin,
-+                     rho.sigma.e = psi2propII(smoothPsi, k = 2.28),
-+                     rho.b = list(smoothPsi, cPsi),
-+                     rho.sigma.b = list(psi2propII(smoothPsi, k = 2.28),
-+                                        cPsi)))
-\end{Sinput}
-\begin{Soutput}
-   user  system elapsed 
- 10.098   0.078  10.212 
-\end{Soutput}
-\end{Schunk}
-% latex table generated in R 3.0.1 by xtable 1.7-1 package
-% Mon Jun 17 08:17:39 2013
-\begin{table}[ht]
-\centering
-{\small
-\begin{tabular}{rlll}
-  \hline
-  & classical & robust & robust2 \\ 
-  \hline
-Coefficients (Std. Error) &  &  &  \\ 
-  (Intercept) & 23 (0.809) & 23 (0.846) & 23 (0.806) \\ 
-   \hline
-Variance components &  &  &  \\ 
-  (Intercept) $|$ plate & 0.847 & 0.871 & 0.871 \\ 
-  (Intercept) $|$ sample & 1.932 & 1.971 & 1.921 \\ 
-   \hline
-$\sigma$ & 0.55 & 0.547 & 0.547 \\ 
-   \hline
-REML & 331 &  &  \\ 
-   \hline
-\end{tabular}
-}
-\caption{Comparison table of the fitted models for the Penicillin example.} 
-\label{tab:cmpPenicillin}
-\end{table}
+<<penicillin2,echo=TRUE>>=
+st(robust2 <- rlmer(diameter ~ 1 + (1|plate) + (1|sample), Penicillin,
+                    rho.sigma.e = psi2propII(smoothPsi, k = 2.28),
+                    rho.b = list(smoothPsi, cPsi),
+                    rho.sigma.b = list(psi2propII(smoothPsi, k = 2.28),
+                                       cPsi)))
+<<penicillin-cmp,results=tex>>=
+print(xtable(compare(classical, robust, robust2, show.rho.functions=FALSE),
+             caption="Comparison table of the fitted models for the Penicillin example.",
+             label="tab:cmpPenicillin"))
+<<penicillin-ta,fig=TRUE,width=2.5,height=2.5>>=
+lower <- floor(min(getME(robust, "w_e"), getME(robust, "w_b_vector"))*100)/100
+ta(robust) + scale_colour_gradient(limits=c(lower,1)) +
+    theme(legend.position = "none") + ggtitle("Tukey-Anscombe Plot")
+<<penicillin-qq-resid,fig=TRUE,width=2.5,height=2.5>>=
+qq(robust) + scale_colour_gradient(limits=c(lower,1)) +
+    theme(legend.position = "none") + ggtitle("QQ-plot of the Residuals")
+<<penicillin-qq-ranef,fig=TRUE,height=3.3>>=
+qq(robust, type="ranef") +
+    scale_colour_gradient("robustness weights", limits=c(lower,1)) +
+    theme(legend.position = "bottom", legend.box = "horizontal") +
+    ggtitle("QQ-plot of the Random Effects")
+@
+
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=0.45\textwidth]{figs/fig-ex-penicillin-ta}
@@ -574,6 +590,16 @@ REML & 331 &  &  \\
   \label{fig:penicillinResidualAnalysis}
 \end{figure}
 
+<<penicillin-robustness-weights,fig=TRUE,height=3.2>>=
+tmp <- cbind(Penicillin, wgt.e = getME(robust, "w_e"))
+print(ggplot(tmp, aes(plate, diameter, color = sample)) +
+      geom_point(aes(size=1/wgt.e)) + geom_line(aes(as.numeric(plate))) +
+      scale_colour_brewer("Sample", palette="Dark2") +
+      scale_size_continuous(expression(w[e]),breaks=c(1,1.5,2,2.5),labels=c(1,0.66,0.5,0.33)) +
+      scale_y_continuous(breaks=c(18,20,22,24,26)) +
+      xlab("Plate") + ylab("Diameter growth inhibition zone (mm)") +
+      theme(legend.position = "bottom", legend.box = "horizontal"))
+@
 
 \begin{figure}[htb]
   \centering
@@ -599,6 +625,9 @@ that got a low robustness weight.
 
 \section{Sleepstudy Example}
 \label{sec:sleepstudy}
+<<sleepstudy-setup>>=
+source(file.path(rlmerDoc, "sleepstudy.R"))
+@
 
 This dataset is a subset of data gathered by \citet{belenky03sleepstudy}
 for a study of the effects of sleep deprivation time. The $18$ subjects
@@ -608,6 +637,18 @@ measured several times on each day of the trial. The measurements were made
 over a course of $10$ days. The data are shown in
 Figure~\ref{fig:sleepstudyRaw}.
 
+<<sleepstudy-raw,fig=TRUE,height=8>>=
+print(ggplot(sleepstudy, aes(Days, Reaction)) +
+      stat_smooth(method=function(formula, ..., weights)
+                  lmrob(formula, ..., setting="KS2011"),
+                  se=FALSE) +
+      ## stat_smooth(method="loess", span=1.5, se=FALSE) +
+      geom_point() +
+      scale_x_continuous(breaks=c(0,2,4,6,8)) +
+      facet_wrap(~ Subject, nrow=3) +
+      xlab("Days of sleep deprivation") +
+      ylab("Average reaction time (ms)"))
+@
 
 \begin{figure}[htbp]
   \centering
@@ -623,17 +664,9 @@ Figure~\ref{fig:sleepstudyRaw}.
 
 The data.frame consists of three columns:
 
-\begin{Schunk}
-\begin{Sinput}
-> str(sleepstudy)
-\end{Sinput}
-\begin{Soutput}
-'data.frame':	180 obs. of  3 variables:
-$ Reaction: num 250 259 251 321 ...
-$ Days : num 0 1 2 3 4 5 6 7 ...
-$ Subject : Factor w/ 18 levels "309","310","370",..: 7 7 7 7 7 7 7 7 ...
-\end{Soutput}
-\end{Schunk}
+<<sleepstudy-str, echo=TRUE>>=
+str(sleepstudy)
+@
 
 As in \citet{bates2011lme4}, we will fit a random intercept and slope
 model. This is an extension of a linear regression model with \T{Reaction}
@@ -652,71 +685,29 @@ now have a non-diagonal covariance matrix $\Ubth$, we have to use another
 tuning constant for ``rho.sigma.b''. It corresponds roughly to the square
 of the one used in the diagonal case.
 
-\begin{Schunk}
-\begin{Sinput}
-> st(classical <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy))
-\end{Sinput}
-\end{Schunk}
-\begin{Schunk}
-\begin{Soutput}
-   user  system elapsed 
-  0.084   0.001   0.084 
-\end{Soutput}
-\end{Schunk}
-\begin{Schunk}
-\begin{Sinput}
-> st(robust <-
-+    rlmer(Reaction ~ Days + (Days|Subject), sleepstudy,
-+          rho.sigma.e = psi2propII(smoothPsi, k = 2.28),
-+          rho.sigma.b = chgDefaults(smoothPsi, k = 5.11, s=10)))
-\end{Sinput}
-\begin{Soutput}
-    user   system  elapsed 
-1405.825    2.872 2237.468 
-\end{Soutput}
-\begin{Sinput}
-> summary(robust)
-\end{Sinput}
-\begin{Soutput}
-Robust linear mixed model fit by DAStau 
-Formula: Reaction ~ Days + (Days | Subject) 
-   Data: sleepstudy 
-
-Random effects:
- Groups   Name        Variance Std.Dev. Corr  
- Subject  (Intercept) 784.05   28.001         
-          Days         41.68    6.456   -0.037
- Residual             404.16   20.104         
-Number of obs: 180, groups: Subject, 18
-
-Fixed effects:
-            Estimate Std. Error t value
-(Intercept)  252.090      7.295   34.55
-Days          10.827      1.646    6.58
-
-Correlation of Fixed Effects:
-     (Intr)
-Days -0.121
-
-Robustness weights for the residuals: 
- 155 weights are ~= 1. The remaining 25 ones are summarized as
-   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-  0.204   0.597   0.725   0.687   0.872   0.977 
-
-Robustness weights for the random effects: 
- 24 weights are ~= 1. The remaining 12 ones are summarized as
-   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-  0.631   0.692   0.723   0.735   0.742   0.901 
-
-Rho functions used for fitting:
-  Residuals:
-    eff: smoothed Huber (k = 1.345, s = 10) 
-    sig: smoothed Huber, Proposal II (k = 2.28, s = 10) 
-  Random Effects, variance component 1 (Subject):
-    eff: smoothed Huber (k = 1.345, s = 10) 
-    vcp: smoothed Huber (k = 5.11, s = 10) 
-\end{Soutput}
-\end{Schunk}
+<<sleepstudy,echo=TRUE, eval=FALSE>>=
+st(classical <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy))
+<<sleepstudy,echo=FALSE>>=
+st(classical <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy),
+   update.cache=TRUE)
+<<sleepstudy3,echo=TRUE>>=
+st(robust <-
+   rlmer(Reaction ~ Days + (Days|Subject), sleepstudy,
+         rho.sigma.e = psi2propII(smoothPsi, k = 2.28),
+         rho.sigma.b = chgDefaults(smoothPsi, k = 5.11, s=10)))
+summary(robust)
+<<sleepstudy-vars>>=
+wgts <- matrix(wgt.b(robust), 2)[1,]
+names(wgts) <- rownames(ranef(robust)[[1]])
+lowest <- as.numeric(names(which.min(wgts)))
+w335 <- wgts["335"]
+<<sleepstudy-ta,fig=TRUE,width=2.5,height=2.5>>=
+<<penicillin-ta>>
+<<sleepstudy-qq-resid,fig=TRUE,width=2.5,height=2.5>>=
+<<penicillin-qq-resid>>
+<<sleepstudy-qq-ranef,fig=TRUE,height=3.3>>=
+<<penicillin-qq-ranef>>
+@
 
 The residual analysis plots are shown in
 Figure~\ref{fig:sleepstudyResidualAnalysis}. There are some points that are
@@ -734,6 +725,27 @@ but admittedly, the sample size of $18$ is quite low.
   \label{fig:sleepstudyResidualAnalysis}
 \end{figure}
 
+<<sleepstudy-ex-comparsion,fig=TRUE,height=8>>=
+val <- g.get_colors_brewer(8)
+print(ggplot(cbind(sleepstudy, wgt.e=getME(robust, "w_e")),
+             aes(Days, Reaction)) +
+      stat_smooth(method=function(formula, ..., weights)
+                  lmrob(formula, ..., setting="KS2011"),
+                  se=FALSE) +
+      augLinesPop(classical, colour=val[1], linetype = 2) +
+      augLines(classical, colour=val[1]) +
+      ##augLinesSE(classical, colour=val[1]) +
+      augLinesPop(robust, colour=val[2], linetype = 2) +
+      augLines(robust, colour=val[2]) +
+      ##augLinesSE(robust, colour=val[2]) +
+      geom_point(aes(color=wgt.e)) +
+      scale_x_continuous(breaks=c(0,2,4,6,8)) +
+      scale_colour_gradient(expression(w[e]), limits=c(lower,1)) +
+      facet_wrap(~ Subject, nrow=3) +
+      xlab("Days of sleep deprivation") +
+      ylab("Average reaction time (ms)") +
+      theme(legend.position = "bottom", legend.box = "horizontal"))
+@
 
 \begin{figure}[htpb]
   \centering
@@ -751,6 +763,47 @@ but admittedly, the sample size of $18$ is quite low.
   \label{fig:sleepstudyExComparison}
 \end{figure}
 
+<<sleepstudy-ex-comparsion-subsample,fig=TRUE>>=
+val <- g.get_colors_brewer(8)
+mysub <- c(308, 335, 352)
+print(ggplot(subset(cbind(sleepstudy, wgt.e=getME(robust, "w_e")),
+                    Subject %in% mysub),
+             aes(Days, Reaction)) +
+      ## stat_smooth(method=function(formula, ..., weights)
+      ##             lmrob(formula, ..., setting="KS2011"),
+      ##             se=TRUE, alpha = 0.2) +
+      augLinesPop(classical, colour=val[1], linetype = 2,
+                  size = 0.5, subset = Subject %in% mysub) +
+      augLinesPopSE(classical, colour=val[1], fill=val[1], linetype = 2,
+                    size = 0.25, alpha = 0.1, subset = Subject %in% mysub) +
+      augLines(classical, colour=val[1],
+               size = 0.5, subset = Subject %in% mysub) +
+      augLinesSE(classical, colour=val[1], fill=val[1],
+                 size = 0.25, subset = Subject %in% mysub) +
+      augLinesPop(robust, colour=val[2], linetype = 2,
+                  size = 0.5, subset = Subject %in% mysub) +
+      augLinesPopSE(robust, colour=val[2], fill=val[2], linetype = 2,
+                    size = 0.25, alpha = 0.1, subset = Subject %in% mysub) +
+      augLines(robust, colour=val[2],
+               size = 0.5, subset = Subject %in% mysub) +
+      augLinesSE(robust, colour=val[2], fill=val[2],
+                 size = 0.25, subset = Subject %in% mysub) +
+      ## augLinesPop(redesc, colour=val[3], linetype = 2,
+      ##             size = 0.5, subset = Subject %in% mysub) +
+      ## augLinesPopSE(redesc, colour=val[3], fill=val[3], linetype = 2,
+      ##               size = 0.25, alpha = 0.1, subset = Subject %in% mysub) +
+      ## augLines(redesc, colour=val[3],
+      ##          size = 0.5, subset = Subject %in% mysub) +
+      ## augLinesSE(redesc, colour=val[3], fill=val[3],
+      ##            size = 0.25, alpha = 0.1, subset = Subject %in% mysub) +
+      geom_point(aes(color=wgt.e)) +
+      scale_x_continuous(breaks=c(0,2,4,6,8)) +
+      scale_colour_gradient(expression(w[e]), limits=c(lower,1)) +
+      facet_wrap(~ Subject, nrow=1) +
+      xlab("Days of sleep deprivation") +
+      ylab("Average reaction time (ms)") +
+      theme(legend.position = "bottom", legend.box = "horizontal"))
+@
 
 \begin{figure}[htb]
   \centering
@@ -771,8 +824,8 @@ most of the subjects follow the general population fit quite closely,
 others, such as subject 335, show even a negative trend. Nevertheless, the
 robustness weights for the random effects do not show any clear
 outliers. The lowest robustness weight is assigned to subject
-$309$ while subject $335$ is given a weight of
-$0.69$. The three subjects with the most notable
+$\Sexpr{lowest}$ while subject $335$ is given a weight of
+$\Sexpr{round(w335,2)}$. The three subjects with the most notable
 difference between classical and robust fit are shown again in
 Figure~\ref{fig:sleepstudyExComparisonSubsample}. The differences in
 Subject $308$ are most pronounced. The predicted slope of the classical fit
@@ -790,90 +843,19 @@ robust fit. With ``rlmer'', one can do this conveniently by using the
 object that is being updated will be used as initial fit.
 
 %% eff computed: for s=2: c(1.63, 1.09, 1.5) (rho.b)
-\begin{Schunk}
-\begin{Sinput}
-> st(redesc <-
-+    update(robust, rho.e = chgDefaults(lqqPsi, cc=c(1.47, 0.98, 1.5)),
-+           rho.sigma.e = chgDefaults(lqqPsi, cc=c(2.19, 1.46, 1.5)),
-+           rho.b = chgDefaults(lqqPsi, cc=c(1.47, 0.98, 1.5)),
-+           rho.sigma.b = chgDefaults(lqqPsi, cc=c(5.95, 3.97, 1.5))))
-\end{Sinput}
-\begin{Soutput}
-    user   system  elapsed 
-2991.906    4.851 3002.041 
-\end{Soutput}
-\begin{Sinput}
-> summary(redesc)
-\end{Sinput}
-\begin{Soutput}
-Robust linear mixed model fit by DAStau 
-Formula: Reaction ~ Days + (Days | Subject) 
-   Data: sleepstudy 
+<<sleepstudy-fit-redescending,echo=TRUE>>=
+st(redesc <-
+   update(robust, rho.e = chgDefaults(lqqPsi, cc=c(1.47, 0.98, 1.5)),
+          rho.sigma.e = chgDefaults(lqqPsi, cc=c(2.19, 1.46, 1.5)),
+          rho.b = chgDefaults(lqqPsi, cc=c(1.47, 0.98, 1.5)),
+          rho.sigma.b = chgDefaults(lqqPsi, cc=c(5.95, 3.97, 1.5))))
+summary(redesc)
+<<sleepstudy-cmp,results=tex>>=
+print(xtable(compare(classical, robust, redesc, show.rho.functions=FALSE),
+      caption="Comparison table of the fitted models for the Sleepstudy example.",
+      label="tab:cmpSleepstudy"))
+@
 
-Random effects:
- Groups   Name        Variance Std.Dev. Corr  
- Subject  (Intercept) 809.17   28.446         
-          Days         43.66    6.607   -0.069
- Residual             399.39   19.985         
-Number of obs: 180, groups: Subject, 18
-
-Fixed effects:
-            Estimate Std. Error t value
-(Intercept)  251.775      7.435   33.86
-Days          10.822      1.690    6.40
-
-Correlation of Fixed Effects:
-     (Intr)
-Days -0.146
-
-Robustness weights for the residuals: 
- 143 weights are ~= 1. The remaining 37 ones are summarized as
-   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
- 0.0118  0.6730  0.8890  0.7820  0.9800  0.9990 
-
-Robustness weights for the random effects: 
- 14 weights are ~= 1. The remaining 22 ones are summarized as
-   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-  0.690   0.778   0.929   0.879   0.977   0.995 
-
-Rho functions used for fitting:
-  Residuals:
-    eff: lqq (cc1 = 1.47, cc2 = 0.98, cc3 = 1.5) 
-    sig: lqq (cc1 = 2.19, cc2 = 1.46, cc3 = 1.5) 
-  Random Effects, variance component 1 (Subject):
-    eff: lqq (cc1 = 1.47, cc2 = 0.98, cc3 = 1.5) 
-    vcp: lqq (cc1 = 5.95, cc2 = 3.97, cc3 = 1.5) 
-\end{Soutput}
-\end{Schunk}
-% latex table generated in R 3.0.1 by xtable 1.7-1 package
-% Mon Jun 17 09:45:07 2013
-\begin{table}[ht]
-\centering
-{\small
-\begin{tabular}{rlll}
-  \hline
-  & classical & robust & redesc \\ 
-  \hline
-Coefficients (Std. Error) &  &  &  \\ 
-  (Intercept) & 251.4 (6.82) & 252.1 (7.30) & 251.8 (7.44) \\ 
-  Days &  10.5 (1.55) &  10.8 (1.65) &  10.8 (1.69) \\ 
-   \hline
-Variance components &  &  &  \\ 
-  (Intercept) $|$ Subject & 24.74 & 28.00 & 28.45 \\ 
-  Days $|$ Subject &  5.92 &  6.46 &  6.61 \\ 
-   \hline
-Correlations &  &  &  \\ 
-  (Intercept) $\times$ Days $|$ Subject &  0.0656 & -0.0369 & -0.0695 \\ 
-   \hline
-$\sigma$ & 25.6 & 20.1 & 20 \\ 
-   \hline
-REML & 1744 &  &  \\ 
-   \hline
-\end{tabular}
-}
-\caption{Comparison table of the fitted models for the Sleepstudy example.} 
-\label{tab:cmpSleepstudy}
-\end{table}
 A comparison table of the three fits is shown in
 Table~\ref{tab:cmpSleepstudy}. The two robust fits are quire similar. The
 variance attributed to the between subjects effects is a little lower for
@@ -884,8 +866,8 @@ increase the estimates residual standard error.  While the estimated
 residual standard errors for both robust fits are smaller than for the
 classical fit, the estimated standard errors of the fixed effects estimates
 are a little increased (the estimated standard error for the classical fit
-is $6.82$ for the intercept and
-$1.55$ for ``Days'').
+is $\Sexpr{round(coef(summary(classical))[1,2],2)}$ for the intercept and
+$\Sexpr{round(coef(summary(classical))[2,2],2)}$ for ``Days'').
 
 The robust fits return a negative estimate of the correlation between the
 random intercept and slopes. When choosing smaller tuning parameters for
@@ -898,6 +880,14 @@ is picked up by the estimator. For smaller tuning parameters, the weight
 function decreases more quickly and the off-diagonal points get a lower
 weight, finally this leads to a negative estimate of the correlation.
 
+<<sleepstudy-ranef-scatterplot,fig=TRUE,width=5,height=5>>=
+r <- ranef(redesc)[[1]]
+r$wgt.b <- matrix(getME(redesc, "w_b_vector"),2)[1,]
+print(ggplot(r, aes(`(Intercept)`, `Days`, color=wgt.b)) +
+      geom_point() +
+      scale_colour_gradient(expression(w[b])) +
+      theme(legend.position = "bottom", legend.box = "horizontal"))
+@
 
 \begin{figure}[htb!]
   \centering
@@ -956,6 +946,18 @@ shown in Figure~\ref{fig:smoothedHuber}. Useful tables of tuning constants
 for this and the lqq $\psi$-function are given in Tables
 \ref{tab:tuningParameters} to \ref{tab:effLqq}.
 
+<<smoothedHuber,fig=TRUE>>=
+xs <- seq.int(0, 3, length.out=100)
+data <- data.frame(x = xs,
+                   Huber = huberPsi@psi(xs),
+                   `Smoothed` = smoothPsi@psi(xs))
+print(ggplot(melt(data, 1),
+             aes(x, value, color=variable)) + geom_line() +
+      scale_colour_hue(expression(paste(psi, "-function"))) +
+      ylab(expression(psi(x))) +
+      theme(legend.position = "bottom", legend.box = "horizontal"))
+
+@
 
 \vspace{5ex}
 
@@ -968,6 +970,222 @@ for this and the lqq $\psi$-function are given in Tables
 \end{figure}
 
 %% functions required to compute efficiencies
+<<efficiency-table, eval=FALSE>>=
+require(robustlmm)
+
+## location
+avarBeta <- function(psi) psi@Epsi2()/psi@EDpsi()^2
+effBeta <- function(psi) 1 / avarBeta(psi)
+findEffBeta <- function(psi, eff) {
+    tDefs <- psi@tDefs
+    if (length(tDefs) == 0) return(NULL)
+    lavar <- function(c) {
+        tDefs[1] <- c
+        lpsi <- do.call(chgDefaults, c(list(psi), tDefs))
+        effBeta(lpsi) - eff
+    }
+    ret <- try(uniroot(lavar, tDefs[1] * c(0.25, 5))$root)
+    ## fail gracefully
+    if (is(ret, "try-error")) NA else ret
+}
+
+## scale
+E <- function(expr, ...) {
+    sexpr <- substitute(expr)
+    args <- list(...)
+    if (is.name(sexpr)) {
+        fcall <- paste(sexpr, "(x)")
+        expr <- parse(text = fcall)
+    }
+    else {
+        if (!(is.call(sexpr) && match("x", all.vars(sexpr), nomatch = 0L)))
+            stop("'expr' must be a function or an expression containing 'x'")
+        expr <- sexpr
+    }
+    ifun <- function(x)
+        eval(expr, envir = c(list(x=x), args), enclos=parent.frame())*dnorm(x)
+    integrate(ifun, -Inf, Inf)$value
+}
+
+## kappa = E[w(x)x^2] / E[w(x)]
+kappa <- function(k) E(w(x, k)*x^2, k=k) / E(w(x, k), k=k)
+## Psi(x,sigma,k) = w(x/sigma, k)*((x/sigma)^2 - kappa(k))
+Psi <- function(x, sigma, k) w(x/sigma,k)*((x/sigma)^2 - kappa(k))
+## Dpsi(x,sigma,k) = d/dsigma Psi(x,sigma,k)
+DPsi <- function(x, sigma, k) {
+    xs <- x/sigma
+    -1/sigma*(Dw(xs,k)*((xs)^3 - kappa(k)*(xs)) + 2*w(xs,k)*xs^2)
+}
+## A = E[Psi(x,1,k)^2]
+A <- function(k) E(Psi(x,1,k)^2,k=k)
+## B = E[d/dsigma Psi
+B <- function(k) E(DPsi(x,1,k), k=k)
+## effSigma = B / A^2 / 2
+effSigma <- Vectorize(function(k) B(k)^2 / A(k) / 2)
+## find eff:
+findEffSigma <- function(eff, lower=0.4, upper=6) {
+    lfun <- function(k) effSigma(k) - eff
+    uniroot(lfun, lower=lower, upper=upper)$root
+}
+
+## compute tuning constants to give the desired efficiency
+require(xtable)
+effs <- c(0.80, 0.85, 0.90, 0.95)
+tbl <- matrix("", nrow=length(effs), ncol=4)
+tbl[,1] <- sprintf("%.2f", effs)
+colnames(tbl) <- c("efficiency",
+                   "$k$ for $\\hat\\mu$",
+                   "$k$ for $\\hat\\sigma_\\text{\\eqref{eq:sigmaDAS}}$",
+                   "$k$ for $\\hat\\sigma_\\text{\\eqref{eq:sigmaDAS}}$, Prop. II")
+## location and wls case
+## w and Dw for wls case
+w <- huberPsi@wgt
+Dw <- huberPsi@Dwgt
+for (i in seq_along(effs)) {
+    leff <- effs[i]
+    tbl[i,2] <- round(findEffBeta(huberPsi, leff), 2)
+    tbl[i,3] <- round(findEffSigma(leff), 2)
+}
+## Prop II case
+huberProp2 <- psi2propII(huberPsi)
+w <- huberProp2@wgt
+Dw <- huberProp2@Dwgt
+for (i in seq_along(effs)) {
+    leff <- effs[i]
+    tbl[i,4] <- round(findEffSigma(leff), 2)
+}
+
+## print results
+print(xtable(tbl, align="lcccc"),
+      file="tuning-constants-table.tex",include.rownames=FALSE,
+      floating=FALSE,sanitize.text.function=function(x){x})
+
+<<efficiency-tables, eval=FALSE>>=
+## dist functions
+dist <- function(b, kappa=kappa) {
+    if (!is.matrix(b)) return(b*b) ## assume s==1
+    s <- ncol(b)
+    if (s == 1) return(drop(b*b))
+    ## else: just square and sum
+    rowSums(b*b) - kappa*s
+}
+dist2 <- function(sb2, s=1, kappa=kappa) {
+    if (s==1) return(sb2)
+    return(sb2 - kappa*s)
+}
+kappa.nondiag <- function(wgt, s) {
+    if (s == 1) {
+        tfun <- function(v) wgt(dist2(v))*v*dchisq(v,s)
+        tfun2 <- function(v) wgt(dist2(v))*dchisq(v,s)
+        integrate(tfun, 0, Inf)$value / integrate(tfun2, 0, Inf)$value
+    } else {
+        tfun <- function(v, kappa) (v-s*kappa)*wgt(v - s*kappa)*dchisq(v, s)
+        tfun2 <- function(kappa) integrate(tfun, 0, Inf, kappa=kappa)$value
+        uniroot(tfun2, c(0, 1))$root
+    }
+}
+## asymptotic efficiency functions
+dEta <- Vectorize(function(wgt, s) {
+    ## kappa <- kappa.nondiag(wgt, s)
+    DEtaQ <- 1/(1 + 2/s) * integrate(function(v) (v/s)^2*wgt(v)^2*dchisq(v,s), 0, Inf)$value
+    DEtaM <- 1/(1 + 2/s) * integrate(function(v) (v/s)^2*wgt(v)*dchisq(v,s), 0, Inf)$value
+    DEtaM^2 / DEtaQ
+}, "s")
+dTau <- Vectorize(function(wgt, s) {
+    kappa <- kappa.nondiag(wgt,s)
+    uTau <- function(v) dist2(v,s,kappa)*wgt(dist2(v,s,kappa))
+    DTauQ <- 1/(2*s) * integrate(function(v) uTau(v)^2*dchisq(v,s), 0, Inf)$value
+    DTauM <- 1/(2*s) * integrate(function(v) uTau(v)*(v-s)*dchisq(v,s), 0, Inf)$value
+    DTauM^2 / DTauQ
+}, "s")
+dMu <- Vectorize(function(wgt, s) {
+    DMuQ <- 1/s * integrate(function(v) v*wgt(sqrt(v))^2*dchisq(v,s), 0, Inf)$value
+    DMuM <- 1/s * integrate(function(v) v*wgt(sqrt(v))*dchisq(v,s), 0, Inf)$value
+    DMuM^2 / DMuQ
+}, "s")
+## function to find corresponding efficiency
+findCorrespEff.nondiag <- function(rho, s, effFun, eff=effBeta(rho), lower=0.1) {
+    cat("Eff for beta:", eff, "\n")
+    lfun <- function(k) {
+        lrho <- chgDefaults(rho, k = k)
+        effFun(lrho@wgt, s) - eff
+    }
+    uniroot(lfun, c(lower, 15))$root
+}
+## need a different function for lqq
+findCorrespEff.lqq <- function(s, effFun, eff, lower=1) {
+    if (s == 1) {
+        lfun <- function(k) {
+            lrho <- chgDefaults(lqqPsi, cc = c(1.5*k, k, 1.5))
+            asymptEff1(lrho@wgt, lrho@Dwgt) - eff
+        }
+    } else {
+        lfun <- function(k) {
+            lrho <- chgDefaults(lqqPsi, cc = c(1.5*k, k, 1.5))
+            effFun(lrho@wgt, s) - eff
+        }
+    }
+    k. <- uniroot(lfun, c(lower, 15))$root
+    c(1.5*k., k., 1.5)
+}
+
+## compute table for huber functions...
+ss <- c(2:7)
+tbl <- matrix("NA", nrow=4, ncol=length(ss))
+tbl[1,] <- as.character(ss)
+for (i in seq_along(ss)) {
+    s <- ss[i]
+    tbl[2,i] <- format(findCorrespEff.nondiag(huberPsi, s, dEta, 0.95), digits=3)
+    tbl[3,i] <- format(findCorrespEff.nondiag(huberPsi, s, dTau, 0.95), digits=3)
+    tbl[4,i] <- format(findCorrespEff.nondiag(huberPsi, s, dMu, 0.95), digits=3)
+}
+rownames(tbl) <- c("$s$", "$b_\\eta$", "$b_\\tau$", "$b_\\mu$")
+print(xtable(tbl,
+             caption="Tuning parameters for the optimal $B$-estimator to yield $95\\%$ efficiency, non-diagonal case. For the Huber $\\psi$-function.",
+             label="tab:effBOptimal"),
+      hline.after=c(0,1,4),
+      include.colnames=FALSE,
+      sanitize.text.function=identity,
+      file="efficiency-table-B-optimal.tex")
+
+## compute loc-scale table for lqq functions...
+effs <- c(0.80, 0.85, 0.90, 0.95)
+tbl <- matrix("", nrow=length(effs), ncol=3)
+tbl[,1] <- sprintf("%.2f", effs)
+f <- function(cc) sprintf("($%s$)", paste(format(cc[-3], digits=3),collapse="$,$"))
+for (i in seq_along(effs)) {
+    leff <- effs[i]
+    tbl[i,2] <- f(robustbase:::lmrob.lqq.findc(c(-0.5, 1.5, leff, NA)))
+    tbl[i,3] <- f(findCorrespEff.lqq(1, eff=leff, lower=0.5))
+}
+colnames(tbl) <- c("efficiency", "$cc$ for $\\hat\\mu$",
+                   "$cc$ for $\\hat\\sigma_\\text{\\eqref{eq:sigmaDAS}}$")
+print(xtable(tbl,
+             caption="Tuning parameters for lqq $\\psi$-function for the location and scale estimates such that they reach the given asymptotic efficiency. The third parameter is always taken to be $1.5$.",
+             label="tab:eqqLqqLocationScale"),
+      include.rownames=FALSE,
+      sanitize.text.function=identity,
+      file="efficiency-table-lqq-locationScale.tex")
+
+## compute non-diag table for lqq functions...
+ss <- c(2:6)
+tbl <- matrix("", nrow=4, ncol=length(ss))
+tbl[1,] <- as.character(ss)
+for (i in seq_along(ss)) {
+    s <- ss[i]
+    tbl[2,i] <- f(findCorrespEff.lqq(s, dEta, 0.95))
+    tbl[3,i] <- f(findCorrespEff.lqq(s, dTau, 0.95))
+    tbl[4,i] <- f(findCorrespEff.lqq(s, dMu, 0.95))
+}
+rownames(tbl) <- c("$s$", "$cc_\\eta$", "$cc_\\tau$", "$cc_\\mu$")
+print(xtable(tbl, digits=2,
+             caption="Tuning parameters for the lqq weight function to yield $95\\%$ efficiency, non-diagonal case. The third parameter is always taken to be $1.5$.",
+             label="tab:effLqq"),
+      hline.after=c(0,1,4),
+      include.colnames=FALSE,
+      sanitize.text.function=identity,
+      file="efficiency-table-lqq.tex")
+@
 
 \clearpage
 \begin{table}[htbp]
