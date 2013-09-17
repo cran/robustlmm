@@ -177,12 +177,15 @@ findBlocks <- function(obj, Lambdat=obj$Lambdat(), Lind=obj$Lind) {
 ## Summary / printing methods                        ##
 #######################################################
 
+##' @importFrom robustbase summarizeRobWeights
+
 ## Print method
 ## along the lines of printMerenv of lme4
 .printRlmerMod <- function(x, digits = max(3, getOption("digits") - 3),
                            correlation = NULL, symbolic.cor = FALSE,
-                           signif.stars = getOption("show.signif.stars"), ...,
-                           so = summary.rlmerMod(x)) {
+                           signif.stars = getOption("show.signif.stars"),
+                           ranef.comp = c("Variance", "Std.Dev."),
+                           ..., so = summary.rlmerMod(x)) {
     ## check if doFit = FALSE is in call
     if (!is.null(so$call$doFit) && !so$call$doFit) {
         cat("Unfitted rlmerMod object. Use update(object, doFit=TRUE) to fit it.\n")
@@ -190,21 +193,12 @@ findBlocks <- function(obj, Lambdat=obj$Lambdat(), Lind=obj$Lind) {
     }
     ## title
     cat(so$methTitle, "\n")
-    ## formula and data
-    if (!is.null(cc <- so$call$formula))
-        cat("Formula:", deparse(cc),"\n")
-    if (!is.null(cc <- so$call$data))
-        cat("   Data:", deparse(cc), "\n")
-    if (!is.null(cc <- so$call$subset))
-        cat(" Subset:", deparse(asOneSidedFormula(cc)[[2]]),"\n")
-    ## random effects
-    cat("\nRandom effects:\n")
-    print(formatVC(so$varcor, digits = digits, useScale = TRUE),
-          quote = FALSE, digits = digits, ...)
-    ngrps <- so$ngrps
-    cat(sprintf("Number of obs: %d, groups: ", so$devcomp$dims[["n"]]))
-    cat(paste(paste(names(ngrps), ngrps, sep = ", "), collapse = "; "))
-    cat("\n")
+    ## these are in fromLme4.R
+    .prt.call(so$call); cat("\n")
+    .prt.VC(so$varcor, digits=digits, useScale= so$useScale,
+	    comp = ranef.comp, ...)
+    .prt.grps(so$ngrps, nobs= so$devcomp$dims[["n"]])
+    
     ## fixed effecs
     ## this part is 1:1 from printMerenv
     p <- nrow(so$coefficients)
@@ -253,9 +247,9 @@ findBlocks <- function(obj, Lambdat=obj$Lambdat(), Lind=obj$Lind) {
     }
     ## robustness weights
     summarizeRobWeights(so$wgt.e, digits=3,
-                                     header="\nRobustness weights for the residuals:")
+                        header="\nRobustness weights for the residuals:")
     summarizeRobWeights(so$wgt.b, digits=3,
-                                     header="\nRobustness weights for the random effects:")
+                        header="\nRobustness weights for the random effects:")
     ## rho functions
     cat("\nRho functions used for fitting:\n")
     cat("  Residuals:\n")
@@ -269,8 +263,36 @@ findBlocks <- function(obj, Lambdat=obj$Lambdat(), Lind=obj$Lind) {
     invisible(if (missing("x")) so else x)
 }
 
+.methTitle <- function(object)
+    sprintf("Robust linear mixed model fit by %s", object@method)
+
 ##' @S3method print rlmerMod
-print.rlmerMod <- function(x, ...) .printRlmerMod(x, ...)
+print.rlmerMod <- function(x, digits = max(3, getOption("digits") - 3),
+                           correlation = NULL, symbolic.cor = FALSE,
+                           signif.stars = getOption("show.signif.stars"),
+                           ranef.comp = "Std.Dev.", ...) {
+    ## check if doFit = FALSE is in call
+    if (!is.null(x@call$doFit) && !x@call$doFit) {
+        cat("Unfitted rlmerMod object. Use update(object, doFit=TRUE) to fit it.\n")
+         return(invisible(x))
+    }
+    dims <- (devC <- x@devcomp)$dims
+    ## title
+    cat(.methTitle(x), "\n")
+    .prt.call(x@call)
+    useScale <- as.logical(dims[["useSc"]])
+
+    varcor <- VarCorr(x)
+    .prt.VC(varcor, digits=digits, comp = ranef.comp, ...)
+    ngrps <- sapply(x@flist, function(x) length(levels(x)))
+    .prt.grps(ngrps, nobs= dims[["n"]])
+    if(length(cf <- fixef(x)) >= 0) {
+	cat("Fixed Effects:\n")
+	print.default(format(cf, digits = digits),
+		      print.gap = 2L, quote = FALSE, ...)
+    } else cat("No fixed effect coefficients\n")
+    invisible(x)
+}
 
 ##' @S3method summary rlmerMod
 ## this follows the lines of summary.merMod of lme4
@@ -287,12 +309,9 @@ summary.rlmerMod <- function(object, ...) {
         coefs <- cbind(coefs, coefs[,1]/coefs[,2], deparse.level=0)
         colnames(coefs)[3] <- "t value"
     }
-    ## check whether the methods slot is there
-    ## (for compatibility with older versions of rlmer)
-    mName <- sprintf("Robust linear mixed model fit by %s", object@method)
     varcor <- VarCorr(object)
 
-    structure(list(methTitle=mName, devcomp=devC,
+    structure(list(methTitle=.methTitle(object), devcomp=devC,
                    ngrps=sapply(object@flist, function(x) length(levels(x))),
                    coefficients=coefs, sigma=sig,
                    vcov=vcov(object, correlation=TRUE, sigm=sig),
@@ -304,105 +323,23 @@ summary.rlmerMod <- function(object, ...) {
                    rho.sigma.e=rho.e(object, "sigma"),
                    rho.b=rho.b(object),
                    rho.sigma.b=rho.b(object, "sigma")
-                   ), class = "summary.rlmer")
+                   ), class = "summary.rlmerMod")
 }
-##' @S3method print summary.rlmer
-print.summary.rlmer <- function(x, ...) {
+##' @S3method print summary.rlmerMod
+print.summary.rlmerMod <- function(x, ...) {
     .printRlmerMod(..., so = x)
 }
-##' @exportMethod show
-setMethod("show", "rlmerMod", function(object) .printRlmerMod(object))
 
-##' @rdname getInfo
-##' @method getInfo lmerMod
-##' @S3method getInfo lmerMod
-getInfo.lmerMod <- function(object, ...) {
-    if (is(object, "mer")) {
-        lsum <- lme4::summary(object)
-        coefs <- lsum@coefs
-        varcor <- VarCorr(object)
-        isREML <- lme4::isREML(object)
-    } else {
-        lsum <- summary(object)
-        coefs <- lsum$coefficients
-        varcor <- lsum$varcor
-        isREML <- .isREML(object)
-    }
-    .namedVector <- function(mat) {
-        if (is.vector(mat)) return(mat)
-        names <- rownames(mat)
-        ret <- drop(mat)
-        names(ret) <- names
-        ret
-    }
-    .getVC <- function(varcor) {
-        vc <- lapply(varcor, function(grp) attr(grp, "stddev"))
-        ret <- unlist(vc, use.names = FALSE)
-        names(ret) <-
-            unlist(lapply(1:length(vc), function(i)
-                          paste(names(vc[[i]]), names(vc)[i], sep=" | ")))
-        ##.namedVector(ret)
-        ret
-    }
-    .getCorr <- function(varcor) {
-        ret <- lapply(1:length(varcor), function(i) {
-            grp <- varcor[[i]]
-            corr <- attr(grp, "correlation")
-            if (nrow(corr) == 1) return(NULL)
-            names <- outer(colnames(corr), paste("x", rownames(corr)), paste)
-            ret <- as.vector(corr[upper.tri(corr)])
-            names(ret) <- paste(as.vector(names[upper.tri(names)]),
-                                names(varcor)[i], sep = " | ")
-            ret
-        })
-        unlist(ret)
-    }
-    ret <- list(data = object@call$data,
-                coef = .namedVector(coefs[,1,drop=FALSE]),
-                stderr = .namedVector(coefs[,2,drop=FALSE]),
-                varcomp = .getVC(varcor),
-                sigma = sigma(object))
-    corrs <- .getCorr(varcor)
-    if (length(corrs) > 0) ret$correlations <- corrs
-    if (isREML) {
-        ret$REML <- deviance(object)
-    } else {
-        ret$deviance <- deviance(object)
-    }
-    ret
-}
-
-##' @rdname getInfo
-##' @method getInfo mer
-##' @S3method getInfo mer
-getInfo.mer <- getInfo.lmerMod
-
-##' @rdname getInfo
-##' @method getInfo rlmerMod
-##' @S3method getInfo rlmerMod
-getInfo.rlmerMod <- function(object, ...) {
-    linfo <- getInfo.lmerMod(object)
-    linfo$REML <- linfo$deviance <- NULL
-    linfo$rho.e <- .sprintPsiFunc(rho.e(object), TRUE)
-    linfo$rho.sigma.e <- .sprintPsiFunc(rho.e(object, "sigma"), TRUE)
-    rho.b <- rho.b(object)
-    rho.sigma.b <- rho.b(object, "sigma")
-    for (bt in seq_along(object@blocks)) {
-        linfo[[paste("rho.b",bt,sep="_")]] <- .sprintPsiFunc(rho.b[[bt]], TRUE)
-        linfo[[paste("rho.sigma.b",bt,sep="_")]] <- .sprintPsiFunc(rho.sigma.b[[bt]], TRUE)
-    }
-    linfo
-}
-
-##' Compare the fits of multiple lmerMod or rlmerMod objects.
+##' Use \code{compare} to quickly compare the estaimated parameters of
+##' the fits of multiple lmerMod or rlmerMod objects.
 ##'
-##' @title Create a comparison chart for multiple fits
-##' @param ... objects to compare
-##' @param digits number of digits to show in print
+##' @title Create comparison charts for multiple fits
+##' @param ... objects to compare, or, for the \code{\link{xtable}}
+##' functions: passed to the respective \code{\link{xtable}} function.
+##' @param digits number of digits to show in output
 ##' @param dnames names of objects given as arguments (optional)
 ##' @param show.rho.functions whether to show rho functions in output.
-##' @return comparison table
-##' @seealso \code{\link{xtable.comparison.table}}
+##' @keywords models utilities
 ##' @examples
 ##' fm1 <- lmer(Yield ~ (1|Batch), Dyestuff)
 ##' fm2 <- rlmer(Yield ~ (1|Batch), Dyestuff)
@@ -493,22 +430,90 @@ print.comparison.table <- function(x, ...) {
     print(x, ..., quote=FALSE)
 }
 
-##' @title Create Latex and HTML tables for output of \code{\link{compare}()}.
-##'
-##' This function is a wrapper to \code{table} for objects of class
-##' \code{comparison.table}. It uses the same arguments as \code{xtable()}. 
-##' @param x object of class "comparison.table".
+##' @rdname compare
+##' @method getInfo lmerMod
+##' @S3method getInfo lmerMod
+getInfo.lmerMod <- function(object, ...) {
+    lsum <- summary(object)
+    coefs <- lsum$coefficients
+    varcor <- lsum$varcor
+    isREML <- .isREML(object)
+    .namedVector <- function(mat) {
+        if (is.vector(mat)) return(mat)
+        names <- rownames(mat)
+        ret <- drop(mat)
+        names(ret) <- names
+        ret
+    }
+    .getVC <- function(varcor) {
+        vc <- lapply(varcor, function(grp) attr(grp, "stddev"))
+        ret <- unlist(vc, use.names = FALSE)
+        names(ret) <-
+            unlist(lapply(1:length(vc), function(i)
+                          paste(names(vc[[i]]), names(vc)[i], sep=" | ")))
+        ##.namedVector(ret)
+        ret
+    }
+    .getCorr <- function(varcor) {
+        ret <- lapply(1:length(varcor), function(i) {
+            grp <- varcor[[i]]
+            corr <- attr(grp, "correlation")
+            if (nrow(corr) == 1) return(NULL)
+            names <- outer(colnames(corr), paste("x", rownames(corr)), paste)
+            ret <- as.vector(corr[upper.tri(corr)])
+            names(ret) <- paste(as.vector(names[upper.tri(names)]),
+                                names(varcor)[i], sep = " | ")
+            ret
+        })
+        unlist(ret)
+    }
+    ret <- list(data = object@call$data,
+                coef = .namedVector(coefs[,1,drop=FALSE]),
+                stderr = .namedVector(coefs[,2,drop=FALSE]),
+                varcomp = .getVC(varcor),
+                sigma = sigma(object))
+    corrs <- .getCorr(varcor)
+    if (length(corrs) > 0) ret$correlations <- corrs
+    if (!is(object, "rlmerMod")) {
+        if (isREML) {
+            ret$REML <- deviance(object)
+        } else {
+            ret$deviance <- deviance(object)
+        }
+    }
+    ret
+}
+
+##' @rdname compare
+##' @method getInfo rlmerMod
+##' @S3method getInfo rlmerMod
+getInfo.rlmerMod <- function(object, ...) {
+    linfo <- getInfo.lmerMod(object)
+    linfo$REML <- linfo$deviance <- NULL
+    linfo$rho.e <- .sprintPsiFunc(rho.e(object), TRUE)
+    linfo$rho.sigma.e <- .sprintPsiFunc(rho.e(object, "sigma"), TRUE)
+    rho.b <- rho.b(object)
+    rho.sigma.b <- rho.b(object, "sigma")
+    for (bt in seq_along(object@blocks)) {
+        linfo[[paste("rho.b",bt,sep="_")]] <- .sprintPsiFunc(rho.b[[bt]], TRUE)
+        linfo[[paste("rho.sigma.b",bt,sep="_")]] <- .sprintPsiFunc(rho.sigma.b[[bt]], TRUE)
+    }
+    linfo
+}
+
+##' The functions \code{xtable.comparison.table} and
+##' \code{print.xtable.comparison.table} are wrapper functions for the
+##' respective \code{\link{xtable}} and \code{\link{print.xtable}}
+##' functions.
+##' 
+##' @rdname compare
+##' @param x object of class "comparison.table" or "xtable.comparison.table"
 ##' @param caption see \code{\link{xtable}}.
 ##' @param label see \code{\link{xtable}}.
 ##' @param align see \code{\link{xtable}}.
-##' @param digits see \code{\link{xtable}}.
 ##' @param display see \code{\link{xtable}}.
-##' @param ... passed to \code{\link{xtable}}.
-##' @seealso \code{\link{xtable}}, \code{\link{print.xtable.comparison.table}}
-##'   and \code{\link{compare}}.
+##' @seealso \code{\link{xtable}}
 ##' @examples
-##' fm1 <- lmer(Yield ~ (1|Batch), Dyestuff)
-##' fm2 <- rlmer(Yield ~ (1|Batch), Dyestuff)
 ##' require(xtable)
 ##' xtable(compare(fm1, fm2))
 ##' @importFrom xtable xtable
@@ -532,24 +537,15 @@ xtable.comparison.table <- function(x, caption=NULL, label=NULL, align=NULL,
     xtbl
 }
 
-##' @title Print Export Tables for comparison tables
-##'
-##' Wrapper for \code{print.xtable} for objects of class
-##' \code{xtable.comparison.table}.
-##' 
-##' @param x An object of class \code{xtable.comparison.table}.
+##' @rdname compare
 ##' @param add.hlines replace empty lines in comparison table by hlines.
 ##'   Supersedes \code{hline.after} argument of \code{print.xtable}.
 ##' @param latexify.namescol replace \dQuote{sigma} and \dQuote{x} in
 ##'   the first column by latex equivalents.
-##' @param include.rownames include row numbers (names are included in
-##'   the first column returned by\\ \code{xtable.comparison.table}).
-##' @param ... passed to \code{\link{print.xtable}}.
+##' @param include.rownames include row numbers (the object returned by
+##'  \code{xtable.comparison.table} includes names in the first column)
 ##' @importFrom xtable print.xtable
-##' @seealso \code{\link{print.xtable}}, \code{\link{xtable.comparison.table}},
-##'  and \code{\link{compare}}.
-##' @examples
-##' ## see example in ?xtable.comparison.table
+##' @seealso \code{\link{print.xtable}}
 ##' @method print xtable.comparison.table
 ##' @export
 print.xtable.comparison.table <- function(x, add.hlines=TRUE,
@@ -639,4 +635,15 @@ update.rlmerMod <- function(object, formula., ..., evaluate = TRUE) {
     if (evaluate)
         eval(call, parent.frame())
     else call
+}
+
+#######################################################
+## predict method                                    ##
+#######################################################
+
+##' @importFrom stats predict
+##' @S3method predict rlmerMod
+predict.rlmerMod <- function(object, ...) {
+    class(object) <- "lmerMod"
+    predict(object, ...)
 }

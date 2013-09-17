@@ -1,8 +1,14 @@
 
+##' @importClassesFrom robustbase psi_func
 ##' @exportClass psi_func_cached
 setClass("psi_func_cached", contains = c("psi_func"))
 
 ##' @importFrom Matrix bdiag
+##' @importFrom methods new setAs setClass setRefClass setMethod
+##' @importFrom robustbase huberPsi psiFunc summarizeRobWeights
+##' @importMethodsFrom robustbase chgDefaults plot
+##' @importMethodsFrom Matrix diag solve determinant t crossprod tcrossprod as.vector drop rowSums rowMeans colSums colMeans chol which
+
 
 ## This is basically a copy of the merPredD-class
 ##
@@ -13,6 +19,7 @@ setClass("psi_func_cached", contains = c("psi_func"))
 ## @title rlmerPredD
 ## @name rlmerPredD-class
 ## @slot all see rlmerPredD class
+##' @importMethodsFrom Matrix isDiagonal isTriangular
 setRefClass("rlmerPredD",
             fields =
                 list(U_e     = "ddiMatrix",
@@ -25,7 +32,7 @@ setRefClass("rlmerPredD",
                      Zt      = "dgCMatrix",
                      beta    = "numeric",
                      b.s     = "numeric",
-                     b       = "numeric",
+                     b.r     = "numeric",
                      theta   = "numeric",
                      sigma   = "numeric",
                      n       = "numeric",
@@ -93,7 +100,7 @@ setRefClass("rlmerPredD",
                          V_e <<- Diagonal(x=if (is(v_e, "numeric")) v_e else diag(v_e))
                          beta <<- beta
                          b.s <<- b.s
-                         b <<- as(U_b %*% b.s, "numeric")
+                         b.r <<- as(U_b %*% b.s, "numeric")
                          sigma <<- sigma
                          lower <<- lower
                          setZeroB()
@@ -115,10 +122,10 @@ setRefClass("rlmerPredD",
                      setU = function(value) setB.s(value),
                      setB.s = function(value) {
                          b.s <<- value
-                         b <<- as(U_b %*% value, "numeric")
+                         b.r <<- as(U_b %*% value, "numeric")
                      },
                      setB = function(value) {
-                         b <<- value
+                         b.r <<- value
                          b.s <<- as(stdB(1, Matrix(value)), "numeric")
                      },
                      stdB = function(sigma = sigma, matrix, drop=TRUE, t=FALSE) {
@@ -230,7 +237,8 @@ setRefClass("rlmerPredD",
                          Epsi2_b <<- diag(Epsi_bpsi_bt) ## for easier computation in diagonal case
                      },
                      initGH = function(numpoints=13) {
-                         gh <- robustbase:::ghq(numpoints)
+                         ### ::: required to make roxygen2 work
+                         gh <- robustlmm:::ghq(numpoints)
                          ghz <<- gh$nodes
                          ghw <<- gh$weights*dnorm(gh$nodes)
                          ghZ <<- matrix(ghz, numpoints, numpoints)
@@ -310,6 +318,11 @@ setRefClass("rlmerPredD",
                          }
                          set.unsc <<- TRUE
                          return(cache.unsc)
+                     },
+                     ## functions for compatibility with lme4
+                     b = function(fac) {
+                         stopifnot(isTRUE(all.equal(fac, 1.)))
+                         b.r
                      }
                      )
                 )
@@ -433,24 +446,70 @@ setRefClass("rlmerResp",
             )
 
 
-##' @title rlmerMod Class
 ##' Class "rlmerMod" of Robustly Fitted Mixed-Effect Models
 ##'
 ##' A robust mixed-effects model as returned by \code{\link{rlmer}}.
+##' @title rlmerMod Class
 ##' @name rlmerMod-class
-##' @aliases rlmerMod-class
-##' show,rlmerMod-method
-##' coef.rlmerMod
-##' fitted.rlmerMod formula.rlmerMod
-##' model.frame.rlmerMod model.matrix.rlmerMod print.rlmerMod
-##' show.rlmerMod summary.rlmerMod
-##' terms.rlmerMod update.rlmerMod
-##' vcov.rlmerMod print.summary.rlmer show.summary.rlmer
-##' summary.summary.rlmer vcov.summary.rlmer
+##' @aliases rlmerMod-class coef.rlmerMod deviance.rlmerMod
+##' extractAIC.rlmerMod family.rlmerMod fitted.rlmerMod fixef.rlmerMod
+##' formula.rlmerMod isGLMM.rlmerMod isLMM.rlmerMod isNLMM.rlmerMod
+##' isREML.rlmerMod logLik.rlmerMod model.frame.rlmerMod
+##' model.matrix.rlmerMod nobs.rlmerMod predict.rlmerMod
+##' print.rlmerMod print.summary.rlmer print.VarCorr.rlmerMod
+##' ranef.rlmerMod resid.rlmerMod rlmerMod-class sigma.rlmerMod
+##' show.rlmerMod show,rlmerMod-method show.summary.rlmerMod
+##' summary.rlmerMod summary.summary.rlmerMod terms.rlmerMod
+##' update.rlmerMod VarCorr.rlmerMod VarCorr.summary.rlmerMod
+##' vcov.rlmerMod vcov.summary.rlmerMod weights.rlmerMod
 ##' @docType class
 ##' @section Objects from the Class: Objects are created by calls to
 ##' \code{\link{rlmer}}.
-##' @seealso \code{\link{rlmer}}
+##' @section Methods: Almost all methods available from objects
+##' returned from \code{\link{lmer}} are also available for objects
+##' returned by \code{\link{rlmer}}. They usage is the
+##' same.
+##'
+##' It follows a list of some the methods that are exported by this
+##' package:
+##' 
+##' \itemize{
+##' \item \code{\link{coef}}
+##' \item \code{\link{deviance}} (disabled, see below)
+##' \item \code{\link{extractAIC}} (disabled, see below)
+##' \item \code{\link{family}}
+##' \item \code{\link{fitted}}
+##' \item \code{\link[=fixef.merMod]{fixef}}
+##' \item \code{\link{formula}}
+##' \item \code{\link{getInfo}}
+##' \item \code{\link{isGLMM}}
+##' \item \code{\link{isLMM}}
+##' \item \code{\link{isNLMM}}
+##' \item \code{\link{isREML}}
+##' \item \code{\link{logLik}} (disabled, see below)
+##' \item \code{\link{model.frame}}
+##' \item \code{\link{model.matrix}}
+##' \item \code{\link{nobs}}
+##' \item \code{\link[=plot.rlmerMod]{plot}}
+##' \item \code{\link[=predict.merMod]{predict}}
+##' \item \code{\link[=ranef.merMod]{ranef}} (only partially implemented)
+##' \item \code{\link[=residuals.rlmerMod]{residuals}}
+##' \item \code{\link{sigma}}
+##' \item \code{\link{summary}}
+##' \item \code{\link{terms}}
+##' \item \code{\link{update}}
+##' \item \code{\link[=VarCorr.merMod]{VarCorr}}
+##' \item \code{\link{vcov}}
+##' \item \code{\link{weights}}
+##' }
+##' @section Disabled methods: A log likelihood or even a pseudo log
+##' likelihood is not defined for the robust estimates returned by
+##' \code{\link{rlmer}}. Methods that depend on the log likelihood are
+##' therefore not available. For this reason the methods
+##' \code{deviance}, \code{extractAIC} and \code{logLik} stop with an
+##' error if they are called.
+##' @seealso \code{\link{rlmer}}; corresponding class in package
+##' \code{lme4}: \code{\link{merMod}}
 ##' @keywords classes
 ##' @examples
 ##'
@@ -481,7 +540,7 @@ setClass("rlmerMod",
                         rho.sigma.e = "psi_func",
                         method  = "character",
                         ## from rreTrms:
-                        b       = "numeric",
+                        b.r      = "numeric",
                         rho.b   = "list",
                         rho.sigma.b = "list",
                         blocks  = "list",
@@ -498,7 +557,7 @@ setClass("rlmerMod",
              v <- validObject(object@rho.sigma.e)
              if (!is.logical(v) || ! v)
                  return(v)
-             if (length(object@b) != length(object@b.s))
+             if (length(object@b.r) != length(object@b.s))
                  return("b and u have to be of the same length")
              if (length(object@blocks) != max(object@ind))
                  return("number of blocks and maximum index in ind must coincide")
@@ -562,7 +621,7 @@ setClass("rlmerMod",
 ##           from
 ##       })
 
-## ##' @name rlmerMod-class
+## ## @name rlmerMod-class
 ## ### Define inheritance from lmerMod to rlmerMod
 ## setIs(class1 = "rlmerMod", class2 = "lmerMod",
 ##       coerce = function(from) {
@@ -602,7 +661,7 @@ setClass("rlmerMod",
 ##               from@rho.e <- cPsi
 ##               from@rho.sigma.e = from@rho.e
 ##               from@method <- "DAStau"
-##               from@b <- from@pp$b
+##               from@b.r <- from@pp$b.r
 ##               b <- findBlocks(value@pp)
 ##               from@rho.b <- rep(list(cPsi),length(b$dim))
 ##               from@rho.sigma.b = from@rho.b
@@ -620,74 +679,7 @@ setClass("rlmerMod",
 .convLme4Rlmer <- function(from) {
     X <- getME(from, "X")
     Zt <- getME(from, "Zt")
-    if (is(from, "mer")) {
-        ## getME does not provide all slots
-        ## create them here
-        ## prepare...
-        ngrps <- sapply(from@flist, function(x) length(levels(x)))
-        if (!identical(ngrps, ngrps[attr(from@flist, "assign")]))
-            stop("Multiple random effects from the same grouping factor are not allowed using this version of lme4.\n", "Install a newer version of lme4 (http://lme4.r-forge.r-project.org/)")
-        ## from@ST seems to be somewhat different from
-        ## .Call(lme4:::mer_ST_chol, from)
-        ST <- .Call(lme4:::mer_ST_chol, from)
-        Lmbd <- chk <- list()
-        start <- 0
-        for (bt in seq_along(ngrps)) {
-            chk <- c(chk, rep(ST[bt], ngrps[bt]))
-            lq <- nrow(ST[[bt]])
-            lLmbd <- Matrix(0, lq, lq)
-            end <- start + (lq*(lq+1)/2)
-            lLmbd[lower.tri(lLmbd, diag=TRUE)] <- (start+1):end
-            start <- end
-            lLmbd <- as(lLmbd, "dgCMatrix")
-            Lmbd <- c(Lmbd, rep(list(lLmbd), ngrps[bt]))
-        }
-        LambdatInd <- t(bdiag(Lmbd))
-        chk <- bdiag(chk)
-        ## theta
-        ## the following fails sometimes
-        ## theta <- unname(getME(from, "theta"))
-        ## need to drop here sometimes for some reason...
-        theta <- drop(unlist(sapply(ST, function(z) z[upper.tri(z,diag=TRUE)])))
-        ## Lind
-        Lind <- LambdatInd@x
-        ## Lambdat
-        Lambdat <- LambdatInd
-        Lambdat@x <- theta[Lind]
-        ## check if Lambdat has been constructed correctly
-        ## as dense matrices to avoid problems with zero elements of theta
-        stopifnot(all.equal(as.matrix(chk), as.matrix(Lambdat)))
-        ## u and Zt
-        ## since we have a different Lambda, we also need to
-        ## reorder the rows of Zt and u
-        start <- 0
-        idx <- drop(unlist(sapply(lme4::ranef(from), function(x) {
-            end <- start+prod(dim(x))
-            ret <- (start+1):end
-            start <<- end
-            dim(ret) <- dim(x)
-            t(ret) })))
-        ## need to compute u from b
-        b <- from@ranef[idx]
-        nz <- abs(b)/sigma(from) > 1e-7
-        u <- rep(0, length(idx))
-        if (any(nz)) u[nz] <- solve(t(as.matrix(Lambdat))[nz,nz], b[nz])
-        #u <- from@u[idx]
-        Zt <- Zt[idx,]
-        ## lower
-        lower <- rep(-Inf, length(theta))
-        lower[unique(diag(LambdatInd))] <- 0
-        ## devcomp
-        devcomp <- list(cmp = from@deviance,
-                        dims = from@dims)
-        ## mu
-        mu <- lme4::fitted(from)
-        ## cnms
-        cnms <- lapply(from@ST, colnames)
-        names(cnms) <- names(lme4:::whichterms(from))
-        ## Add colnames to X
-        colnames(X) <- names(fixef(from))
-    } else if (is(from, "merMod")) {
+    if (is(from, "merMod")) {
         Lambdat <- getME(from, "Lambdat")
         Lind <- getME(from, "Lind")
         u <- getME(from, "u")
@@ -696,7 +688,7 @@ setClass("rlmerMod",
         theta <- getME(from, "theta")
         mu <- from@resp$mu
         cnms <- from@cnms
-    }
+    } else stop("Unsupported object of class", class(from))
 
     resp <- new("rlmerResp",
                 mu = mu,
@@ -732,7 +724,7 @@ setClass("rlmerMod",
               rho.e=cPsi,
               rho.sigma.e=cPsi,
               method="DAS",
-              b=pp$b,
+              b.r=pp$b.r,
               rho.b=rep.int(list(cPsi),length(b$dim)),
               rho.sigma.b=rep.int(list(cPsi),length(b$dim)),
               blocks=b$blocks,
@@ -746,7 +738,6 @@ setClass("rlmerMod",
 }
 
 setAs("lmerMod", "rlmerMod", .convLme4Rlmer)
-setAs("mer", "rlmerMod", .convLme4Rlmer)
 
 setAs("rlmerPredD", "rlmerPredD_DAS", function(from) {
     to <- new("rlmerPredD_DAS")
@@ -770,7 +761,7 @@ updateWeights <- function(object) {
     object@theta <- object@pp$theta
     object@beta <- object@pp$beta
     object@b.s <- object@pp$b.s
-    object@b <- object@pp$b
+    object@b.r <- object@pp$b.r
     dd <- object@devcomp$dims
     object@devcomp$cmp[ifelse(dd["REML"], "sigmaREML", "sigmaML")] <- object@pp$sigma
     ## Set slots to NA

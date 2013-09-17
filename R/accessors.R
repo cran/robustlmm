@@ -52,29 +52,6 @@ rho.b <- function(object, which = "default") {
     ret
 }
 
-##' Get theta
-##'
-##' @title Get theta
-##' @param object merMod object
-##' @examples
-##' fm <- rlmer(Yield ~ (1|Batch), Dyestuff)
-##' stopifnot(all.equal(theta(fm), getME(fm, "theta")))
-##' @export
-theta <- function(object) {
-    if (is(object, "rlmerMod")) {
-        ## add names like lme4
-        tt <- object@pp$theta
-        nc <- c(unlist(mapply(function(g,e) {
-            mm <- outer(e,e,paste,sep=".")
-            diag(mm) <- e
-            mm <- mm[lower.tri(mm,diag=TRUE)]
-            paste(g,mm,sep=".")
-        }, names(object@cnms),object@cnms)))
-        names(tt) <- nc
-        tt
-    } else getME(object, "theta")
-}
-
 ## Get Lambda
 ##
 ## @title Get Lambda
@@ -156,6 +133,7 @@ nobs.rlmerMod <- .nobsLmerMod
 ##' @title Get residuals
 ##' @param object rlmerMod object
 ##' @param type type of residuals
+##' @param scaled scale residuals by residual standard deviation (=scale parameter)?
 ##' @param ... ignored
 ##' @examples
 ##' fm <- rlmer(Yield ~ (1|Batch), Dyestuff)
@@ -164,13 +142,16 @@ nobs.rlmerMod <- .nobsLmerMod
 ##' @method residuals rlmerMod
 ##' @importFrom stats residuals resid
 ##' @S3method residuals rlmerMod
-residuals.rlmerMod <- function(object, type = c("response", "weighted"), ...) {
+residuals.rlmerMod <- function(object, type = c("response", "weighted"),
+                               scaled=FALSE, ...) {
     type <- match.arg(type)
-    switch(type,
-           ## FIXME: really??
-           response = object@resp$wtres,
-           weighted = wgt.e(object) * object@resp$wtres,
-           stop("unknown type of residual"))
+    r <- switch(type,
+                ## FIXME: really??
+                response = object@resp$wtres,
+                weighted = wgt.e(object) * object@resp$wtres,
+                stop("unknown type of residual"))
+    if (scaled) r <- r/sigma(object)
+    r
 }
 
 ### Get sigma (so that we are not coercing all the time)
@@ -178,13 +159,11 @@ residuals.rlmerMod <- function(object, type = c("response", "weighted"), ...) {
 ##' @importFrom lme4 sigma
 ##' @S3method sigma rlmerMod
 sigma.rlmerMod <- .sigma
-##' @S3method sigma mer
-sigma.mer <- function(object, ...) lme4::sigma(object, ...)
-##' @S3method sigma merMod
-sigma.merMod <- function(object, ...) lme4:::sigma.merMod(object, ...)
+
 
 ### Get deviance
-.deviance <- function(object, ...) NA
+.deviance <- function(object, ...)
+    stop("Deviance is not defined for rlmerMod objects")
 ##' @S3method deviance rlmerMod
 deviance.rlmerMod <- .deviance
 
@@ -197,7 +176,7 @@ deviance.rlmerMod <- .deviance
     ## Author: Manuel Koller, Date: 11 Apr 2011, 11:40
 
     ## FIXME: ?? offset will be added in updateMu
-    drop(crossprod(object@pp$Zt, object@pp$b) + (object@pp$X %*% object@pp$beta))
+    drop(crossprod(object@pp$Zt, object@pp$b.r) + (object@pp$X %*% object@pp$beta))
 }
 
 ### Get fixed effects
@@ -214,9 +193,9 @@ u.rlmerMod <- function(object, ...) {
 u.lmerMod <- function(object, ...) object@u
 
 ### Get b
-.b <- function(object, ...) object@pp$b
+.b <- function(object, ...) object@pp$b.r
 b.rlmerMod <- function(object, ...) {
-    ret <- object@pp$b
+    ret <- object@pp$b.r
     names(ret) <- dimnames(getZ(object))[[2]]
     ret
 }
@@ -226,38 +205,33 @@ b.lmerMod <- function(object, ...) {
     ret
 }
 
-### Get coefficients
-##' @importFrom stats coef
-##' @S3method coef rlmerMod
-coef.rlmerMod <- function(object, ...) {
-    ret <- list(beta=fixef(object),b=b(object))
-    class(ret) <- "coef.rlmerMod"
-    ret
-}
-
 ### Get ranef
 ##' @importFrom nlme ranef
 ##' @S3method ranef rlmerMod
 ranef.rlmerMod <- function(object, ...) {
     ## FIXME: add postVar, drop and whichel arguments
     b <- b(object)
+    ret <- uArrangedNames(object, b.s = b)
+    class(ret) <- "ranef.rlmerMod"
+    ret
+}
+
+## return u as list arranged like ranef
+uArrangedNames <- function(object, b.s = b.s(object)) {
     ret <- lapply(object@idx, function(bidx) {
-        lret <- b[bidx]
+        lret <- b.s[bidx]
         dim(lret) <- dim(bidx)
         ## add rownames
-        colnames(lret) <- names(b)[bidx[1,]]
+        colnames(lret) <- names(b.s)[bidx[1,]]
         as.data.frame(t(lret))
     })
     ## add names and colnames
     names(ret) <- names(object@cnms)
     for (i in names(ret))
         colnames(ret[[i]]) <- object@cnms[[i]]
-    class(ret) <- "ranef.rlmer"
     ret
 }
-
-## return u as list arranged like ranef
-## but do not bother setting names
+## same as uArrangedNames, but do not set names
 uArranged <- function(object, b.s = b.s(object)) {
     ret <- lapply(object@idx, function(bidx) {
         lret <- b.s[bidx]
@@ -271,7 +245,7 @@ uArranged <- function(object, b.s = b.s(object)) {
 ##'
 ##' Extract (or \dQuote{get}) \dQuote{components} -- in a generalized
 ##' sense -- from a fitted mixed-effects model, i.e. from an object
-##' of class \code{"\linkS4class{rlmerMod}"} or \code{"\linkS4class{mer}"}.
+##' of class \code{"\linkS4class{rlmerMod}"} or \code{"\linkS4class{merMod}"}.
 ##'
 ##' The goal is to provide \dQuote{everything a user may want} from a fitted
 ##' \code{"rlmerMod"} object \emph{as far} as it is not available by methods, such
@@ -322,6 +296,13 @@ uArranged <- function(object, b.s = b.s(object)) {
 ##' \code{\link{fixef}}, \code{\link{vcov}}, etc.:
 ##' see \code{methods(class="rlmerMod")}
 ##' @keywords utilities
+##' @usage getME(object,
+##'   name = c("X", "Z", "Zt", "u", "b.s", "b", "Gp", "Lambda",
+##'            "Lambdat", "U_b", "Lind", "flist", "beta", "theta",
+##'            "n_rtrms", "devcomp", "offset", "lower", "rho_e",
+##'            "rho_b", "rho_sigma_e", "rho_sigma_b", "M", "w_e",
+##'            "w_b", "w_b_vector", "w_sigma_e", "w_sigma_b",
+##'            "w_sigma_b_vector"))
 ##' @examples
 ##'
 ##' ## shows many methods you should consider *before* using getME():
@@ -356,7 +337,7 @@ getME <- function(object,
                   "w_sigma_b", "w_sigma_b_vector"))
 {
     if(missing(name)) stop("'name' must not be missing")
-    if (is(object, "merMod") || is(object, "mer"))
+    if (is(object, "merMod"))
         return(lme4::getME(object, name))
     ## else: assume it's rlmerMod
     stopifnot(length(name <- as.character(name)) == 1,
@@ -392,10 +373,10 @@ getME <- function(object,
            "rho_sigma_b" = rho.b(object, "sigma"),
            "M" = PR$ M(),
            "w_e" = wgt.e(object),
-           "w_b" = uArranged(object, wgt.b(object)),
+           "w_b" = uArrangedNames(object, wgt.b(object)),
            "w_b_vector" = wgt.b(object),
            "w_sigma_e" = wgt.e(object, use.rho.sigma=TRUE),
-           "w_sigma_b" = uArranged(object, wgt.b(object, center=TRUE)),
+           "w_sigma_b" = uArrangedNames(object, wgt.b(object, center=TRUE)),
            "w_sigma_b_vector" = wgt.b(object, center=TRUE),
 	   "..foo.." =# placeholder!
 	   stop(gettextf("'%s' is not implemented yet",
@@ -404,3 +385,24 @@ getME <- function(object,
 	   stop(sprintf("Mixed-Effects extraction of '%s' is not available for class \"%s\"",
 			name, class(object))))
 }## {getME}
+
+##' The function \code{theta} is short for \code{getME(, "theta")}.
+##'
+##' @rdname getME
+##' @examples
+##' stopifnot(all.equal(theta(fm1), getME(fm1, "theta")))
+##' @export
+theta <- function(object) {
+    if (is(object, "rlmerMod")) {
+        ## add names like lme4
+        tt <- object@pp$theta
+        nc <- c(unlist(mapply(function(g,e) {
+            mm <- outer(e,e,paste,sep=".")
+            diag(mm) <- e
+            mm <- mm[lower.tri(mm,diag=TRUE)]
+            paste(g,mm,sep=".")
+        }, names(object@cnms),object@cnms)))
+        names(tt) <- nc
+        tt
+    } else getME(object, "theta")
+}

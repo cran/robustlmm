@@ -149,25 +149,25 @@ print(xtable(compare(classical, robust, robust2, show.rho.functions=FALSE),
 ###################################################
 ### code chunk number 10: penicillin-ta
 ###################################################
+plots <- plot(robust)
 lower <- floor(min(getME(robust, "w_e"), getME(robust, "w_b_vector"))*100)/100
-ta(robust) + scale_colour_gradient(limits=c(lower,1)) +
-    theme(legend.position = "none") + ggtitle("Tukey-Anscombe Plot")
+plots[[1]] + scale_colour_gradient(limits=c(lower,1)) +
+    theme(legend.position = "none")
 
 
 ###################################################
 ### code chunk number 11: penicillin-qq-resid
 ###################################################
-qq(robust) + scale_colour_gradient(limits=c(lower,1)) +
-    theme(legend.position = "none") + ggtitle("QQ-plot of the Residuals")
+plots[[2]] + scale_colour_gradient(limits=c(lower,1)) +
+    theme(legend.position = "none")
 
 
 ###################################################
 ### code chunk number 12: penicillin-qq-ranef
 ###################################################
-qq(robust, type="ranef") +
+plots[[3]] +
     scale_colour_gradient("robustness weights", limits=c(lower,1)) +
-    theme(legend.position = "bottom", legend.box = "horizontal") +
-    ggtitle("QQ-plot of the Random Effects")
+    theme(legend.position = "bottom", legend.box = "horizontal")
 
 
 ###################################################
@@ -245,25 +245,25 @@ w335 <- wgts["335"]
 ###################################################
 ### code chunk number 21: sleepstudy-ta
 ###################################################
+plots <- plot(robust)
 lower <- floor(min(getME(robust, "w_e"), getME(robust, "w_b_vector"))*100)/100
-ta(robust) + scale_colour_gradient(limits=c(lower,1)) +
-    theme(legend.position = "none") + ggtitle("Tukey-Anscombe Plot")
+plots[[1]] + scale_colour_gradient(limits=c(lower,1)) +
+    theme(legend.position = "none")
 
 
 ###################################################
 ### code chunk number 22: sleepstudy-qq-resid
 ###################################################
-qq(robust) + scale_colour_gradient(limits=c(lower,1)) +
-    theme(legend.position = "none") + ggtitle("QQ-plot of the Residuals")
+plots[[2]] + scale_colour_gradient(limits=c(lower,1)) +
+    theme(legend.position = "none")
 
 
 ###################################################
 ### code chunk number 23: sleepstudy-qq-ranef
 ###################################################
-qq(robust, type="ranef") +
+plots[[3]] +
     scale_colour_gradient("robustness weights", limits=c(lower,1)) +
-    theme(legend.position = "bottom", legend.box = "horizontal") +
-    ggtitle("QQ-plot of the Random Effects")
+    theme(legend.position = "bottom", legend.box = "horizontal")
 
 
 ###################################################
@@ -356,12 +356,9 @@ print(xtable(compare(classical, robust, redesc, show.rho.functions=FALSE),
 ###################################################
 ### code chunk number 28: sleepstudy-ranef-scatterplot
 ###################################################
-r <- ranef(redesc)[[1]]
-r$wgt.b <- matrix(getME(redesc, "w_b_vector"),2)[1,]
-print(ggplot(r, aes(`(Intercept)`, `Days`, color=wgt.b)) +
-      geom_point() +
+plots[[4]] + 
       scale_colour_gradient(expression(w[b])) +
-      theme(legend.position = "bottom", legend.box = "horizontal"))
+      theme(legend.position = "bottom", legend.box = "horizontal")
 
 
 ###################################################
