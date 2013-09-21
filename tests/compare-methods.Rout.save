@@ -18,28 +18,15 @@ Type 'q()' to quit R.
 > ## test that should make sure that the results remain constant
 > require(robustlmm)
 Loading required package: robustlmm
-Loading required package: nlme
 Loading required package: lme4
-Loading required package: Matrix
 Loading required package: lattice
-
-Attaching package: 'lme4'
-
-The following object is masked from 'package:nlme':
-
-    lmList, VarCorr
-
-The following object is masked from 'package:stats':
-
-    AIC, BIC
-
-Loading required package: robustbase
+Loading required package: Matrix
 
 Attaching package: 'robustlmm'
 
 The following object is masked from 'package:lme4':
 
-    fixef, getME, sigma, VarCorr
+    getME
 
 > 
 > fit <- function(formula, data, methods =  c("DASvar", "DAStau"),
@@ -57,7 +44,7 @@ The following object is masked from 'package:lme4':
 +                                         rho.e = rho.e, rho.b = rho.b, ...)),
 +                  "\n")
 +              fits[[method]][["IRWLS"]] <- m
-+              print(m)
++              print(summary(m))
 +              print(robustlmm:::u.rlmerMod(m), 4)
 +              if (classic) {
 +                  ## compare with lmer fit
@@ -128,7 +115,7 @@ The following object is masked from 'package:lme4':
 Note: method with signature 'dsparseMatrix#dgeMatrix' chosen for function 'crossprod',
  target signature 'dsCMatrix#dgeMatrix'.
  "CsparseMatrix#ddenseMatrix" would also be valid
-Time elapsed: 3.814 0.027 3.844 0 0 
+Time elapsed: 3.54 0.037 3.581 0 0 
 Robust linear mixed model fit by DASvar 
 Formula: formula 
    Data: data 
@@ -158,10 +145,11 @@ Rho functions used for fitting:
   Random Effects, variance component 1 (Batch):
     eff: smoothed Huber (k = 1.345, s = 10) 
     vcp: smoothed Huber, Proposal II (k = 1.345, s = 10) 
-[1] -19.822   1.081  33.966 -30.283  67.013 -51.900
+      A       B       C       D       E       F 
+-19.822   1.081  33.966 -30.283  67.013 -51.900 
 
 ######## DAStau ########
-Time elapsed: 2.105 0.016 2.123 0 0 
+Time elapsed: 3.21 0.037 3.25 0 0 
 Robust linear mixed model fit by DAStau 
 Formula: formula 
    Data: data 
@@ -191,7 +179,8 @@ Rho functions used for fitting:
   Random Effects, variance component 1 (Batch):
     eff: smoothed Huber (k = 1.345, s = 10) 
     vcp: smoothed Huber, Proposal II (k = 1.345, s = 10) 
-[1] -19.73   1.04  33.50 -29.59  66.03 -51.26
+     A      B      C      D      E      F 
+-19.73   1.04  33.50 -29.59  66.03 -51.26 
 
 ################################################
 ################################################
@@ -222,7 +211,7 @@ sigma               55.5
 +     rho.e = smoothPsi, rho.b = smoothPsi)
 
 ######## DASvar ########
-Time elapsed: 2.491 0.01 2.504 0 0 
+Time elapsed: 2.094 0.01 2.106 0 0 
 Robust linear mixed model fit by DASvar 
 Formula: formula 
    Data: data 
@@ -252,10 +241,11 @@ Rho functions used for fitting:
   Random Effects, variance component 1 (Batch):
     eff: smoothed Huber (k = 1.345, s = 10) 
     vcp: smoothed Huber, Proposal II (k = 1.345, s = 10) 
-[1] 0 0 0 0 0 0
+A B C D E F 
+0 0 0 0 0 0 
 
 ######## DAStau ########
-Time elapsed: 2.55 0.011 2.564 0 0 
+Time elapsed: 3.388 0.044 3.435 0 0 
 Robust linear mixed model fit by DAStau 
 Formula: formula 
    Data: data 
@@ -285,7 +275,8 @@ Rho functions used for fitting:
   Random Effects, variance component 1 (Batch):
     eff: smoothed Huber (k = 1.345, s = 10) 
     vcp: smoothed Huber, Proposal II (k = 1.345, s = 10) 
-[1] 0 0 0 0 0 0
+A B C D E F 
+0 0 0 0 0 0 
 
 ################################################
 ################################################
@@ -316,7 +307,7 @@ sigma               4.02
 +     rho.e = smoothPsi, rho.b = smoothPsi)
 
 ######## DASvar ########
-Time elapsed: 3.348 0.047 3.397 0 0 
+Time elapsed: 3.112 0.05 3.165 0 0 
 Robust linear mixed model fit by DASvar 
 Formula: formula 
    Data: data 
@@ -352,14 +343,19 @@ Rho functions used for fitting:
   Random Effects, variance component 2 (sample):
     eff: smoothed Huber (k = 1.345, s = 10) 
     vcp: smoothed Huber, Proposal II (k = 1.345, s = 10) 
- [1]  4.436e-01  4.436e-01  1.241e-01  2.030e-01 -1.084e-06 -2.536e-01
- [7] -8.075e-01  4.872e-01 -4.441e-01 -4.541e-01  5.688e-01  2.945e-01
-[13]  8.498e-01  2.945e-01  5.481e-01  2.012e-02 -1.615e-01 -1.623e-01
-[19] -8.075e-01  5.688e-01 -4.951e-01 -1.628e-01 -4.495e-01 -7.084e-01
-[25]  5.551e-01 -2.672e-01  4.955e-01 -3.700e-02 -2.667e-02 -7.956e-01
+         a          b          c          d          e          f          g 
+ 4.436e-01  4.436e-01  1.241e-01  2.030e-01 -1.084e-06 -2.536e-01 -8.075e-01 
+         h          i          j          k          l          m          n 
+ 4.872e-01 -4.441e-01 -4.541e-01  5.688e-01  2.945e-01  8.498e-01  2.945e-01 
+         o          p          q          r          s          t          u 
+ 5.481e-01  2.012e-02 -1.615e-01 -1.623e-01 -8.075e-01  5.688e-01 -4.951e-01 
+         v          w          x          A          B          C          D 
+-1.628e-01 -4.495e-01 -7.084e-01  5.551e-01 -2.672e-01  4.955e-01 -3.700e-02 
+         E          F 
+-2.667e-02 -7.956e-01 
 
 ######## DAStau ########
-Time elapsed: 2.791 0.025 2.828 0 0 
+Time elapsed: 8.923 0.075 9.007 0 0 
 Robust linear mixed model fit by DAStau 
 Formula: formula 
    Data: data 
@@ -395,11 +391,16 @@ Rho functions used for fitting:
   Random Effects, variance component 2 (sample):
     eff: smoothed Huber (k = 1.345, s = 10) 
     vcp: smoothed Huber, Proposal II (k = 1.345, s = 10) 
- [1]  0.4530635  0.4530635  0.1294168  0.2063492  0.0005221 -0.2576518
- [7] -0.8188377  0.4921255 -0.4483654 -0.4579115  0.5776317  0.2991698
-[13]  0.8623734  0.2991698  0.5562837  0.0207079 -0.1646226 -0.1649214
-[19] -0.8188377  0.5776317 -0.5034310 -0.1649334 -0.4530078 -0.7202631
-[25]  0.5602820 -0.2652057  0.4998466 -0.0334560 -0.0229158 -0.7941243
+         a          b          c          d          e          f          g 
+ 0.4530635  0.4530635  0.1294168  0.2063492  0.0005221 -0.2576518 -0.8188377 
+         h          i          j          k          l          m          n 
+ 0.4921255 -0.4483654 -0.4579115  0.5776317  0.2991698  0.8623734  0.2991698 
+         o          p          q          r          s          t          u 
+ 0.5562837  0.0207079 -0.1646226 -0.1649214 -0.8188377  0.5776317 -0.5034310 
+         v          w          x          A          B          C          D 
+-0.1649334 -0.4530078 -0.7202631  0.5602820 -0.2652057  0.4998466 -0.0334560 
+         E          F 
+-0.0229158 -0.7941243 
 
 ################################################
 ################################################
@@ -461,8 +462,8 @@ sigma                0.561
 + }
 > 
 > cat('Time elapsed: ', proc.time(),'\n') # for ``statistical reasons''
-Time elapsed:  21.114 0.215 21.349 0.002 0.003 
+Time elapsed:  28.507 0.336 28.867 0.002 0.004 
 > 
 > proc.time()
    user  system elapsed 
- 21.116   0.218  21.349 
+ 28.509   0.340  28.867 

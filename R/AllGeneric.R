@@ -1,4 +1,3 @@
-
 #####################################################
 ## Accessor methods                                ##
 #####################################################
@@ -13,37 +12,20 @@ b <- function(object, ...) UseMethod("b")
 ## @rdname b
 u <- function(object, ...) UseMethod("u")
 
-##' Simple accessor for estimated residual scale sigma.
-##'
-##' @title Get sigma
-##' @param object rlmerMod object
-##' @param ... ignored
-##' @seealso \code{\link{getME}}
-##' @examples
-##' fm <- rlmer(Yield ~ (1|Batch), Dyestuff)
-##' sigma(fm)
-##' getME(fm, "devcomp")$cmp[c("sigmaML", "sigmaREML")]
-##' @export
-sigma <- function(object, ...) UseMethod("sigma")
-
 #####################################################
 ## Summary / printing methods                      ##
 #####################################################
 
-##' Extract some information from objects returned from
-##' \code{\link{rlmer}} and \code{\link{lmer}} in the
-##' form of a simple list. Internally used to 
+##' The function \code{getInfo} is internally used to 
 ##' prepare object for producing a comparison chart in
-##' \code{\link{compare}}.
+##' \code{compare}.
 ##'
-##' @title getInfo of an object
+##' @rdname compare
 ##' @param object object
-##' @param ... ignored
-##' @return list with estimated coefficients, estimated
-##'   variance components, sigma, deviance and
-##'   parameter configuration used to fit.
+##' @return \code{getInfo} returns alist with estimated coefficients,
+##' estimated variance components, sigma, deviance and parameter
+##' configuration used to fit.
 ##' @examples
-##' fm <- rlmer(Yield ~ (1|Batch), Dyestuff)
-##' str(getInfo(fm))
+##' str(getInfo(fm1))
 ##' @export
 getInfo <- function(object, ...) UseMethod("getInfo")

@@ -1,10 +1,6 @@
 ##' Create psi_func_cached object using cached numerical integration for
 ##' E... slots.
 ##'
-##' Warning: the E... slots will not be fully functional: they just
-##' return the value for the current defaults and ignore their
-##' arguments.
-##'
 ##' @title psiFuncCached constructor
 ##' @param rho rho-function
 ##' @param psi psi-function
@@ -14,7 +10,11 @@
 ##' @param name descriptor of this function family
 ##' @param ... default values for tuning constants
 ##' @return psi_func_cached-class object
+##' @section Warning: the E... slots will not be fully functional: they just
+##' return the value for the current defaults and ignore their
+##' arguments.
 ##' @seealso \code{\link{psi_func_cached-class}}
+##' @keywords utilities
 ##' @examples
 ##' ## re-define cPsi as psiFuncCached.
 ##' F0 <- function(x=1, .) rep.int(0, length(x))
@@ -74,11 +74,16 @@ psiFuncCached <- function(rho,psi,wgt,Dwgt,Dpsi,name=NULL, ...) {
         )
 }
 
-## Change the default arguments for a psi_func_cached object
-##
-## @title Change default arguments
-## @param ... arguments to change
-## @export
+##' Change the default arguments for a psi_func_cached object
+##'
+##' @title Change default arguments
+##' @param ... arguments to change
+##' @keywords utilities
+##' @examples
+##' hPsi <- chgDefaults(huberPsi, k=2)
+##' curve(huberPsi@@psi(x), 0, 3)
+##' curve(hPsi@@psi(x), 0, 3, color="blue", add=TRUE)
+##' @export
 setMethod("chgDefaults", signature("psi_func_cached"),
           function(object, ...) {
               ##cat("~~~~ chgDefaults of psi_func_cached ~~~~~\n")
@@ -135,40 +140,65 @@ setMethod("chgDefaults", signature("psi_func_cached"),
     } else name
 }
 
-##' @S3method print psi_func_cached
-print.psi_func_cached <- function(x, ...) print(robustbase:::.sprintPsiFunc(x))
-
 ## from example(psiFunc)
 F0 <- function(x=1, .) rep.int(0, length(x))
 F1 <- function(x=1, .) rep.int(1, length(x))
 FF1 <- function(.) rep.int(1, length(.))
 FF1.2 <- function(.) rep.int(1/2, length(.))
-##' Classical psi function
+
+##' \eqn{\psi}{Psi}-functions are used by \code{\link{rlmer}}
+##' in the estimating equations and to compute robustness
+##' weights. Change tuning parameters using \code{\link{chgDefaults}}
+##' and convert to squared robustness weights using the
+##' \code{\link{psi2propII}} function.
+##' 
+##' The \bold{\dQuote{classical} \eqn{\psi}{psi}-function \code{cPsi}}
+##' can be used to get a non-robust, i.e., classical, fit.
+##' The \code{psi} slot equals the identity function, and
+##' the \code{rho} slot equals quadratic function. Accordingly,
+##' the robustness weights will always be 1 when using \code{cPsi}.
 ##'
-##' Use this psi function to get a classical fit.
-##' @docType function
+##' The \bold{Huber \eqn{\psi}{psi}-function \code{huberPsi}} is identical to
+##' the one in the package \code{robustbase}. The \code{psi} slot equals
+##' the identity function within \eqn{\pm k}{+-k} (where \eqn{k}{k} is
+##' the tuning parameter). Outside this interval it is equal to
+##' \eqn{\pm k}{+-k}. The \code{rho} slot equals the quadratic
+##' function within \eqn{\pm k}{+-k} and a linear function outside.
+##'
+##' The \bold{smoothed Huber \eqn{\psi}{psi}-function} is very similar to
+##' the regular Huber \eqn{\psi}{psi}-function.
+##' Instead of a sharp bend like the Huber function,
+##' the smoothe Huber function bends smoothly. The first tuning
+##' contant, k, can be compared to the tuning constant
+##' of the original Huber function. The second tuning
+##' constant, s, determines the smoothness of the bend.
+##'
+##' @title Classical, Huber and smoother Huber psi- or rho-functions
+##' @name psi-functions
+##' @rdname psi-functions
+##' @aliases cPsi huberPsi smoothPsi
+##' @usage ## see examples
+##' @seealso \code{\link{chgDefaults}} and \code{\link{psi2propII}}
+##' for changing tuning parameters;
+##' \code{\link{psi_func_cached-class}} and
+##' \code{\link{psi_func-class}} for a more detailed description of the
+##' slots; \code{\link{psiFuncCached}} for a constructor function to
+##' create custom \eqn{\psi}{psi}-functions.
 ##' @examples
 ##' plot(cPsi)
-##' @export
+##' plot(huberPsi)
+##' plot(smoothPsi)
+##' curve(cPsi@@psi(x), -3, 3)
+##' curve(smoothPsi@@psi(x, 1.345, 10), -3, 3, add=TRUE, col="red")
+##' curve(huberPsi@@psi(x, 1.345), -3, 3, add=TRUE, col="blue")
+##' @export cPsi
 cPsi <- psiFunc(rho = function(x, .) x^2 / 2, psi = function(x, .) x,
                  wgt = F1, Dwgt = F0, Dpsi = F1, Erho = FF1.2,
                  Epsi2 = FF1, EDpsi = FF1,
                  name = "classic (x^2/2)", . = Inf)
 
-##' Smoothed Huber Function
-##'
-##' Instead of a sharp bend like the huber function,
-##' this function bends smoothly. The first tuning
-##' contant, k, can be compared to the tuning constant
-##' of the original Huber function. The second tuning
-##' constant, s, determines the smoothness of the bend.
-##' @title smoothPsi
-##' @examples
-##' par(mfrow=c(2,1))
-##' plot(smoothPsi)
-##' curve(smoothPsi@@psi(x, 1.345, 10), -3, 3, col="red")
-##' curve(huberPsi@@psi(x, 1.345), -3, 3, add=TRUE)
-##' @docType function
+##' @exportMethod plot
+##' @export huberPsi
 ##' @export
 smoothPsi <- psiFuncCached(rho = function(x, k, s) {
                                 a <- s^(1/(s+1))
@@ -283,6 +313,7 @@ smoothPsi <- psiFuncCached(rho = function(x, k, s) {
 ##' @param object psi_func object to convert
 ##' @param ... optional, new default arguments passed to chgDefaults.
 ##' @aliases psi2propII,psi_func-method
+##' @keywords utilities
 ##' @examples
 ##' par(mfrow=c(2,1))
 ##' plot(smoothPsi)
