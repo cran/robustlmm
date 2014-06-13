@@ -276,6 +276,11 @@ rlmer <- function(formula, data, ..., method = "DAStau",
     if (missing("rho.sigma.e"))
         rho.sigma.e <- psi2propII(rho.e) ## prop II is the default
     lobj@rho.sigma.e <- rho.sigma.e
+    if (method == "DAStau" & any(sapply(lobj@idx, nrow) > 2)) {
+        warning("Method 'DAStau' does not support blocks of size larger than 2. ",
+                "Falling back to method 'DASvar'.")
+        method <- "DASvar"
+    }
     lobj@method <- method
     if (substr(method, 1, 3) == "DAS") {
         lobj@pp <- as(lobj@pp, "rlmerPredD_DAS")
@@ -287,7 +292,7 @@ rlmer <- function(formula, data, ..., method = "DAStau",
 
 
     if (!doFit) return(updateWeights(lobj))
-
+    
     ## do not start with theta == 0
     if (any(theta(lobj)[lobj@lower == 0] == 0)) {
         if (verbose > 0)
@@ -311,11 +316,21 @@ rlmer <- function(formula, data, ..., method = "DAStau",
     ## required for max.iter:
     r <- len(lobj, "theta")
 
-    ## do fit
-    lobj <- switch(method,
-                   `DASvar` = rlmer.fit.DAS.nondiag(lobj, verbose, max.iter, rel.tol, method="DASvar"),
-                   `DAStau` = rlmer.fit.DAS(lobj, verbose, max.iter, rel.tol),
-                   stop("unknown fitting method"))
+    ## do fit: non diagonal case differently
+    if (!isDiagonal(lobj@pp$U_b)) {
+        if (method == "DASvar") {
+            lobj <- rlmer.fit.DAS.nondiag(lobj, verbose, max.iter, rel.tol)
+        } else if (method == "DAStau") {
+            ## fit (crudely) using DASvar method first
+            lobj <- rlmer.fit.DAS.nondiag(lobj, verbose, max.iter, 1e-3, method="DASvar",
+                                          checkFalseConvergence = FALSE)
+            ## now do DAStau fit
+            lobj <- rlmer.fit.DAS.nondiag(lobj, verbose, max.iter, rel.tol, method="DAStau")
+        } else 
+            stop("Non-diagonal case only supported by DAStau and DASvar")
+    } else {
+        lobj <- rlmer.fit.DAS(lobj, verbose, max.iter, rel.tol)
+    }
 
     if (verbose > 0) {
         cat("sigma, theta: ", lobj@pp$sigma, ", ", theta(lobj), "\n")
@@ -328,7 +343,8 @@ rlmer <- function(formula, data, ..., method = "DAStau",
 }
 
 ## DAS method
-rlmer.fit.DAS.nondiag <- function(lobj, verbose, max.iter, rel.tol, method=lobj@method) {
+rlmer.fit.DAS.nondiag <- function(lobj, verbose, max.iter, rel.tol, method=lobj@method,
+                                  checkFalseConvergence = TRUE) {
     if (!.isREML(lobj))
         stop("can only do REML when using averaged DAS-estimate for sigma")
 
@@ -351,6 +367,8 @@ rlmer.fit.DAS.nondiag <- function(lobj, verbose, max.iter, rel.tol, method=lobj@
     ## zero pattern for T matrix
     nzT <- crossprod(bdiag(lobj@blocks[lobj@ind])) == 0
     q <- lobj@pp$q
+    ## false convergence indicator
+    fc <- rep(FALSE, length(lobj@blocks))
     ## iterate
     while(!conv && (iter <- iter + 1) < max.iter) {
         if (verbose > 0) cat("---- Iteration", iter, " ----\n")
@@ -398,12 +416,22 @@ rlmer.fit.DAS.nondiag <- function(lobj, verbose, max.iter, rel.tol, method=lobj@
         T <- WbDelta %*% T
         bs <- sqrt(wbsEta) * lobj@pp$b.s
 
+        lchol <- function(x) {
+            r <- try(chol.default(x), silent=TRUE)
+            ## if chol fails, return sqrt of diagonal
+            if (is(r, "try-error")) {
+                Diagonal(x = sqrt(diag(x)))
+            } else r
+        }
+
         ## cycle block types
         for(type in seq_along(lobj@blocks)) {
             if (convBlks[type]) next
             bidx <- lobj@idx[[type]]
             ## catch dropped vc
             if (all(abs(bs[bidx]) < 1e-7)) {
+                if (verbose > 1)
+                    cat("Block", type, "dropped (all = 0), stopping iterations.\n")
                 convBlks[type] <- TRUE
                 next
             }
@@ -424,12 +452,16 @@ rlmer.fit.DAS.nondiag <- function(lobj, verbose, max.iter, rel.tol, method=lobj@
             if (verbose > 2) {
                 cat("LHS:", as.vector(lhs), "\n")
                 cat("RHS:", as.vector(rhs), "\n")
+                cat("sum(abs(LHS - RHS)):", sum(abs(lhs - rhs)), "\n")
             }
-            if (isTRUE(all.equal(rhs, lhs, check.attributes=FALSE, tolerance = rel.tol^2))) {
+            if (isTRUE(all.equal(rhs, lhs, check.attributes=FALSE, tolerance = rel.tol))) {
+                if (verbose > 1)
+                    cat("Estimating equations satisfied for block", type,
+                        ", stopping iterations.\n")
                 convBlks[type] <- TRUE
                 next
             }
-            deltaT <- as(solve(chol(rhs), chol(lhs)), "sparseMatrix")
+            deltaT <- as(backsolve(lchol(rhs), lchol(lhs)), "sparseMatrix")
             if (verbose > 1) cat("deltaT:", deltaT@x, "\n")
             ## get old parameter estimates for this block
             Ubtilde <- as(lobj@blocks[[type]], "sparseMatrix")
@@ -447,14 +479,27 @@ rlmer.fit.DAS.nondiag <- function(lobj, verbose, max.iter, rel.tol, method=lobj@
             }
             ## check if this block is converged
             diff <- abs(thetatilde[Lind] - theta(lobj)[Lind])
+            if (verbose > 3)
+                cat("criterion:", sum(diff), ">=",
+                    rel.tol * max(c(diff, rel.tol)), ":",
+                    sum(diff) < rel.tol * max(c(diff, rel.tol)), "\n")
             if (sum(diff) < rel.tol * max(c(diff, rel.tol))) {
                 convBlks[type] <- TRUE
+                ## check if estimating equations are satisfied
+                if (checkFalseConvergence) {
+                    if (verbose > 3)
+                        cat("checking estimating equations:", sum(abs(lhs - rhs)),
+                            ">", sqrt(rel.tol), ":", sum(abs(lhs - rhs)) > sqrt(rel.tol), "\n")
+                    if (sum(abs(lhs - rhs)) > sqrt(rel.tol))
+                        fc[type] <- TRUE
+                }
                 next
             }
         }
         if (verbose > 1) {
-            cat("difference:", thetatilde - theta(lobj), "\n")
-            cat("new theta:", thetatilde, "\n")
+            cat("difference:", format(thetatilde - theta(lobj), nsmall=20, scientific=FALSE),
+                "\n")
+            cat("new theta:", format(thetatilde, nsmall=20, scientific=FALSE), "\n")
         }
         ## set theta
         setTheta(lobj, thetatilde, fit.effects = TRUE,
@@ -464,11 +509,25 @@ rlmer.fit.DAS.nondiag <- function(lobj, verbose, max.iter, rel.tol, method=lobj@
         if (all(convBlks)) conv <- TRUE
     }
 
-    if (iter == max.iter)
-        warning("iterations did not converge, returning unconverged estimate.")
-
-    ## FIXME: maybe write something into optinfo?
+    optinfo <- list(optimizer = "rlmer.fit.DAS.nondiag",
+                    conv = list(opt = 0),
+                    feval = iter,
+                    warnings = list(),
+                    val = diff)
     
+    if (iter == max.iter) {
+        warning(wt <- "iterations did not converge, returning unconverged estimate.")
+        optinfo$warnings <- list(wt)
+        optinfo$conv$opt <- 1
+    }
+    if (any(fc)) {
+        warning(wt <- "algorithm converged, but estimating equations are not satisfied.")
+        optinfo$warnings <- c(optinfo$warnings, list(wt))
+        optinfo$conv$opt <- 2
+    }
+
+    lobj@optinfo <- optinfo
+
     lobj
 }
 
@@ -477,19 +536,8 @@ rlmer.fit.DAS <- function(lobj, verbose, max.iter, rel.tol) {
     if (!.isREML(lobj))
         stop("can only do REML when using averaged DAS-estimate for sigma")
 
-    ## catch non diag case
-    if (!isDiagonal(lobj@pp$U_b)) {
-        if (lobj@method != "DAStau")
-            stop("Non-diagonal case only supported by DAStau and DASvar")
-        ## fit (crudely) using DASvar method first
-        lobj <- rlmer.fit.DAS.nondiag(lobj, verbose, max.iter, 1e-3, method="DASvar")
-        ## now do DAStau fit
-        lobj <- rlmer.fit.DAS.nondiag(lobj, verbose, max.iter, rel.tol, method="DAStau")
-        return(lobj)
-    }
-
-    ## diagonal only case
     lupdateTheta <- switch(lobj@method,
+                           DASvar=,
                            DAStau=updateThetaTau,
                            stop("method not supported by rlmer.fit.DAS:", lobj@method))
 
@@ -537,10 +585,19 @@ rlmer.fit.DAS <- function(lobj, verbose, max.iter, rel.tol) {
         theta0 <- theta1
     }
 
-    if (iter == max.iter)
-        warning("iterations did not converge, returning unconverged estimate.")
+    optinfo <- list(optimizer = "rlmer.fit.DAS",
+                    conv = list(opt = 0),
+                    feval = iter,
+                    warnings = list(),
+                    val = diff)
+    
+    if (iter == max.iter) {
+        warning(wt <- "iterations did not converge, returning unconverged estimate.")
+        optinfo$warnings <- list(wt)
+        optinfo$conv$opt <- 1
+    }
 
-    ## FIXME: maybe write something into optinfo?
+    lobj@optinfo <- optinfo
     
     lobj
 }
