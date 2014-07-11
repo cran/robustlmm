@@ -1,8 +1,8 @@
 Package: robustlmm
 Type: Package
 Title: Robust Linear Mixed Effects Models
-Version: 1.5
-Date: 2014-06-12
+Version: 1.6
+Date: 2014-07-11
 Author: Manuel Koller
 Maintainer: Manuel Koller <koller.manuel@gmail.com>
 Description: Robust mixed effects modeling by robustification
@@ -17,6 +17,6 @@ Collate: 'ghq.R' 'AllClass.R' 'rlmer.R' 'accessors.R' 'fromLme4.R'
         'DAS-scale.R' 'fit.effects.R' 'helpers.R' 'AllGeneric.R'
         'lmer.R' 'mutators.R' 'psiFunc2.R' 'zero.theta.R' 'plot.R'
 NeedsCompilation: no
-Packaged: 2014-06-12 15:13:42 UTC; kollerma
+Packaged: 2014-07-11 09:37:53 UTC; kollerma
 Repository: CRAN
-Date/Publication: 2014-06-13 16:28:15
+Date/Publication: 2014-07-11 12:14:12

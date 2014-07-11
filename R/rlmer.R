@@ -179,7 +179,7 @@
 ##'   system.time(rfm.DASvar <- rlmer(Yield ~ (1|Batch), Dyestuff,
 ##'                                   method="DASvar"))
 ##'   ## compare the two
-##'   compare(rfm.DAStau, rfm.DAStau)
+##'   compare(rfm.DAStau, rfm.DASvar)
 ##' 
 ##'   ## Fit variance components with higher efficiency
 ##'   ## psi2propII yields squared weights to get robust estimates
@@ -321,10 +321,6 @@ rlmer <- function(formula, data, ..., method = "DAStau",
         if (method == "DASvar") {
             lobj <- rlmer.fit.DAS.nondiag(lobj, verbose, max.iter, rel.tol)
         } else if (method == "DAStau") {
-            ## fit (crudely) using DASvar method first
-            lobj <- rlmer.fit.DAS.nondiag(lobj, verbose, max.iter, 1e-3, method="DASvar",
-                                          checkFalseConvergence = FALSE)
-            ## now do DAStau fit
             lobj <- rlmer.fit.DAS.nondiag(lobj, verbose, max.iter, rel.tol, method="DAStau")
         } else 
             stop("Non-diagonal case only supported by DAStau and DASvar")
@@ -354,7 +350,6 @@ rlmer.fit.DAS.nondiag <- function(lobj, verbose, max.iter, rel.tol, method=lobj@
         ## vectorize it!
         ghZ <- as.matrix(expand.grid(lobj@pp$ghz, lobj@pp$ghz, lobj@pp$ghz, lobj@pp$ghz))
         ghw <- apply(as.matrix(expand.grid(lobj@pp$ghw, lobj@pp$ghw, lobj@pp$ghw, lobj@pp$ghw)), 1, prod)
-        skbs <- .S(lobj)
     }
 
     ## fit model using EM algorithm
@@ -379,7 +374,7 @@ rlmer.fit.DAS.nondiag <- function(lobj, verbose, max.iter, rel.tol, method=lobj@
         q <- len(lobj, "b")
         T <- switch(method,
                     DASvar=lobj@pp$Tb(),
-                    DAStau=calcTau.nondiag(lobj, ghZ, ghw, skbs, kappas, max.iter),
+                    DAStau=calcTau.nondiag(lobj, ghZ, ghw, .S(lobj), kappas, max.iter),
                     stop("Non-diagonal case only implemented for DASvar"))
         ## compute robustness weights and add to t and bs
         T[nzT] <- 0
@@ -416,18 +411,13 @@ rlmer.fit.DAS.nondiag <- function(lobj, verbose, max.iter, rel.tol, method=lobj@
         T <- WbDelta %*% T
         bs <- sqrt(wbsEta) * lobj@pp$b.s
 
-        lchol <- function(x) {
-            r <- try(chol.default(x), silent=TRUE)
-            ## if chol fails, return sqrt of diagonal
-            if (is(r, "try-error")) {
-                Diagonal(x = sqrt(diag(x)))
-            } else r
-        }
-
         ## cycle block types
         for(type in seq_along(lobj@blocks)) {
             if (convBlks[type]) next
             bidx <- lobj@idx[[type]]
+            if (verbose > 5) {
+                cat("Tau for blocktype ", type, ":", as.vector(T[bidx[,1],bidx[,1]]), "\n")
+            }
             ## catch dropped vc
             if (all(abs(bs[bidx]) < 1e-7)) {
                 if (verbose > 1)
@@ -464,12 +454,13 @@ rlmer.fit.DAS.nondiag <- function(lobj, verbose, max.iter, rel.tol, method=lobj@
             deltaT <- as(backsolve(lchol(rhs), lchol(lhs)), "sparseMatrix")
             if (verbose > 1) cat("deltaT:", deltaT@x, "\n")
             ## get old parameter estimates for this block
-            Ubtilde <- as(lobj@blocks[[type]], "sparseMatrix")
-            Lind <- Ubtilde@x
+            Ubtilde <- lobj@blocks[[type]]
+            pat <- Ubtilde != 0
+            Lind <- Ubtilde[pat]
             diagLind <- diag(Ubtilde)
-            Ubtilde@x[] <- thetatilde[Lind]
+            Ubtilde[pat] <- thetatilde[Lind]
             ## update Ubtilde by deltaT
-            thetatilde[Lind] <- tcrossprod(Ubtilde, deltaT)@x
+            thetatilde[Lind] <- tcrossprod(Ubtilde, deltaT)[pat]
             ## FIXME: check boundary conditions?
             ## check if varcomp is dropped
             if (all(thetatilde[diagLind] < 1e-7)) {

@@ -51,7 +51,7 @@ std.e <- function(object, sigma = object@pp$sigma, matrix, drop=TRUE) {
 ## modularize distance function: compute sum(bs^2) - s
 .d <- function(bs, s=length(bs)) {
     if (s == 1) return(bs)
-    sqrt(sum(bs*bs))
+    if (is.matrix(bs)) sqrt(rowSums(bs*bs)) else sqrt(sum(bs*bs))
 }
 ## same function, but assume we've already summed 
 .d2 <- function(sbs2, s) {
@@ -171,6 +171,14 @@ findBlocks <- function(obj, Lambdat=obj$Lambdat(), Lind=obj$Lind) {
                    matrix(unlist(bidx[bind == i]),nrow = bdim[i]))
     q <- sapply(bidx, length)
     list(blocks = ublocks, ind = bind, idx = bidx, dim = bdim, q = q, k = k)
+}
+
+lchol <- function(x) {
+    r <- try(chol.default(x), silent=TRUE)
+    ## if chol fails, return sqrt of diagonal
+    if (is(r, "try-error")) {
+        Diagonal(x = sqrt(diag(x)))
+    } else r
 }
 
 #######################################################

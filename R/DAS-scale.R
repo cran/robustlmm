@@ -100,10 +100,10 @@ G <- function(tau = rep(1, length(a)), a, s, rho, rho.sigma, pp) {
     for (k in 1:max(object@k)) {
         ind <- object@k == k
         ## check if the block was dropped (u == 0)
-        if (all(idx[ind])) {
+        if (any(idx[ind])) {
             ## Ltmp <- object@pp$L[ind, !ind, drop=FALSE]
             ## use symmpart to calm chol()
-            ret <- c(ret, list(drop(chol(symmpart(
+            ret <- c(ret, list(drop(lchol(symmpart(
                 ## Matrix K_{\theta,k} consists of the
                 ## rows belonging block k and all columns
                 object@rho.e@Epsi2() * tcrossprod(object@pp$K()[ind, , drop=FALSE]) +
@@ -116,9 +116,6 @@ G <- function(tau = rep(1, length(a)), a, s, rho, rho.sigma, pp) {
                 ##            object@pp$Epsi_bpsi_bt[!ind, !ind, drop=FALSE])
                 )))))
         } else {
-            ## check if whole block is zero 
-            if (!all((!idx)[ind]))
-                stop("result of getZeroU ambiguous: either the whole block is zero or not")
             ## return a zero block of the correct size
             ret <- c(ret, list(matrix(0, sum(ind), sum(ind))))
         }
@@ -241,10 +238,7 @@ calcTau.nondiag <- function(object, ghZ, ghw, skbs, kappas, max.iter) {
         s <- nrow(bidx)
         ind <- which(object@ind == type) ## (in terms of blocks on diagonal)
         idx <- !object@pp$zeroB
-        if (!all(idx[bidx])) { ## block has been dropped
-            ## check if the whole block is zero
-            if (!all((!idx)[bidx]))
-                stop("result of getZeroU is ambiguous: either the whole block is zero or not")
+        if (!any(idx[bidx])) { ## block has been dropped
             Tbks <- c(Tbks, rep(list(matrix(0, s, s)), length(ind)))
             next
         }
@@ -279,32 +273,27 @@ calcTau.nondiag <- function(object, ghZ, ghw, skbs, kappas, max.iter) {
                     conv <- FALSE
                     iter <- 0
                     while (!conv && (iter <- iter + 1) < max.iter) {
-                        qrlTbk <- try(qr(lTbk))
+                        qrlTbk <- try(qr(lTbk), silent=TRUE)
                         if (is(qrlTbk, "try-error")) {
-                            warning("qr(lTbk) failed:", qrlTbk, "\nlTbk was:", lTbk,
+                            warning("qr(lTbk) failed: ", qrlTbk, "\nlTbk was: ", paste(lTbk),
                                     "\nSetting it to Tb()\n")
                             conv <- TRUE
                             lTbk <- as.matrix(TkbsI[[ind[k]]])
                         } else if (qrlTbk$rank < s) {
                             warning("Tbk not of full rank (iter=", iter,
-                                    "!!\nlTbk =", as.vector(lTbk), ", setting it to Tb()\n")
+                                    "!!\nlTbk = ", paste(as.vector(lTbk)),
+                                    ", setting it to Tb()\n")
                             conv <- TRUE
                             lTbk <- as.matrix(TkbsI[[ind[k]]])
                         } else {
-                            funA <- function(u) {
-                                btilde <- u[1:2] - wgt(.d(u[1:2],2)) * Lkk %*% u[1:2] -
-                                    crossprod(Sk, u[3:4])
-                                wgtDelta(drop(crossprod(qr.solve(qrlTbk, btilde))))
-                                ## not needed: *prod(dnorm(c(u1,u2,u3,u4))) 
-                            }
-                            a <- int4d(funA)
-                            funB <- function(u) {
-                                btilde <- u[1:2] - wgt(.d(u[1:2],2)) * Lkk %*% u[1:2] -
-                                    crossprod(Sk, u[3:4])
-                                wgt.sigma(drop(crossprod(qr.solve(qrlTbk, btilde))))*
-                                    tcrossprod(btilde)
-                            }
-                            B <- matrix(int4d(funB), s)
+                            btilde <- ghZ[,1:2] - wgt(.d(ghZ[,1:2],2)) * ghZ[, 1:2] %*% Lkk -
+                                ghZ[, 3:4] %*% Sk
+                            tmp1 <- colSums(qr.solve(qrlTbk, t(btilde))^2)
+                            tmp2 <- btilde[,1] * btilde[,2]
+                            a <- sum(wgtDelta(tmp1) * ghw)
+                            B <- matrix(colSums(wgt.sigma(tmp1) * ghw *
+                                                matrix(c(btilde[,1]*btilde[,1], tmp2, tmp2,
+                                                         btilde[,2]*btilde[,2]), length(ghw))),2)
                             lTbk1 <- B/a
                             conv <- isTRUE(all.equal(lTbk, lTbk1)) ## rel.tol default 1e-8
                             ##cat(sprintf("k=%i, iter=%i, conv=%s\n", k, iter, conv))
