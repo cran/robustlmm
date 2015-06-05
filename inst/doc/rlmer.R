@@ -25,56 +25,7 @@ require(robustlmm)
 require(robustbase)
 require(lme4)
 source(file.path(rlmerDoc, "plots.R"))
-## st: function that caches the results and returns the system.time
-require(digest)
-if (!file.exists("cache")) dir.create("cache")
-
-st <- function(expr, update.cache=UPDATE_CACHE) {
-    sexpr <- substitute(expr)
-    file <- file.path("cache", digest(sexpr, "sha1"))
-    cacheInfo <- list(R = paste(R.Version()[c("major", "minor")], collapse="."),
-                      robustlmm = packageVersion("robustlmm"))
-    pf <- parent.frame()
-    if (file.exists(file) && !update.cache) {
-        var <- load(file, envir=pf)
-        obj <- get(var[1], envir=pf)
-        ## make sure version of R and robustlmm matches
-        if (!is.null(acacheInfo <- attr(obj, "cacheInfo"))) {
-            if (!isTRUE(all.equal(cacheInfo[c("R", "robustlmm")],
-                                  acacheInfo[c("R", "robustlmm")]))) {
-                ## versions differ, so recall rlmer with initList
-                call <- getCall(obj)
-                call$init <- acacheInfo[["initList"]]
-                ## do not fit, just initialize the object
-                call$init$doFit <- FALSE
-                obj <- eval(call, envir=pf)
-                assign(var, obj, envir=pf)
-            } ## else: no need to do anything
-            elapsed.time <- acacheInfo[["elapsed.time"]]
-        } else 
-            stop("invalid cache file detected: rerun st with update.cache=TRUE")
-    } else {
-        ## do something similar as system.time
-        time <- proc.time()
-        expr
-        new.time <- proc.time()
-        elapsed.time <- new.time - time
-        ## get it from the parent frame since we need to add attributes
-        obj <- get(var <- as.character(sexpr[[2]]), envir=pf)
-        ## prepare cacheInfo, add it as attribute to the generated object
-        cacheInfo$elapsed.time <- elapsed.time
-        cacheInfo$initList <- list(fixef=fixef(obj), u=getME(obj, "u"),
-                                   sigma=getME(obj, "sigma"), 
-                                   theta=getME(obj, "theta"))
-        attr(obj, "cacheInfo") <- cacheInfo
-        ## update object in parent frame
-        assign(var, obj, envir=pf)
-        ## save created object to the cache file
-        save(list=var, file=file)
-    }
-    ## same value as system.time()
-    structure(elapsed.time, class = "proc_time")
-}
+st <- system.time
 if(packageVersion("robustbase") >= "0.9-8")  {
     lqqPsi <- psiFuncCached(rho = function(x, cc) Mpsi(x, cc, "lqq", -1),
                             psi = function(x, cc) Mpsi(x, cc, "lqq", 0),
@@ -144,21 +95,14 @@ str(Penicillin)
 
 
 ###################################################
-### code chunk number 5: penicillin-lmer (eval = FALSE)
-###################################################
-## st(classical <- lmer(diameter ~ 1 + (1|plate) + (1|sample),
-##                      Penicillin))
-
-
-###################################################
-### code chunk number 6: penicillin-lmer2
+### code chunk number 5: penicillin-lmer
 ###################################################
 st(classical <- lmer(diameter ~ 1 + (1|plate) + (1|sample),
-                     Penicillin), update.cache=TRUE)
+                     Penicillin))
 
 
 ###################################################
-### code chunk number 7: penicillin-rlmer
+### code chunk number 6: penicillin-rlmer
 ###################################################
 st(robust <- rlmer(diameter ~ 1 + (1|plate) + (1|sample), Penicillin,
                    rho.sigma.e = psi2propII(smoothPsi, k = 2.28),
@@ -167,7 +111,7 @@ summary(robust)
 
 
 ###################################################
-### code chunk number 8: penicillin2
+### code chunk number 7: penicillin2
 ###################################################
 st(robust2 <- rlmer(diameter ~ 1 + (1|plate) + (1|sample), Penicillin,
                     rho.sigma.e = psi2propII(smoothPsi, k = 2.28),
@@ -177,7 +121,7 @@ st(robust2 <- rlmer(diameter ~ 1 + (1|plate) + (1|sample), Penicillin,
 
 
 ###################################################
-### code chunk number 9: penicillin-cmp
+### code chunk number 8: penicillin-cmp
 ###################################################
 print(xtable(compare(classical, robust, robust2, show.rho.functions=FALSE),
              caption="Comparison table of the fitted models for the Penicillin example.",
@@ -185,7 +129,7 @@ print(xtable(compare(classical, robust, robust2, show.rho.functions=FALSE),
 
 
 ###################################################
-### code chunk number 10: penicillin-ta
+### code chunk number 9: penicillin-ta
 ###################################################
 plots <- plot(robust)
 lower <- floor(min(getME(robust, "w_e"), getME(robust, "w_b_vector"))*100)/100
@@ -194,14 +138,14 @@ plots[[1]] + scale_colour_gradient(limits=c(lower,1)) +
 
 
 ###################################################
-### code chunk number 11: penicillin-qq-resid
+### code chunk number 10: penicillin-qq-resid
 ###################################################
 plots[[2]] + scale_colour_gradient(limits=c(lower,1)) +
     theme(legend.position = "none")
 
 
 ###################################################
-### code chunk number 12: penicillin-qq-ranef
+### code chunk number 11: penicillin-qq-ranef
 ###################################################
 plots[[3]] +
     scale_colour_gradient("robustness weights", limits=c(lower,1)) +
@@ -209,7 +153,7 @@ plots[[3]] +
 
 
 ###################################################
-### code chunk number 13: penicillin-robustness-weights
+### code chunk number 12: penicillin-robustness-weights
 ###################################################
 tmp <- cbind(Penicillin, wgt.e = getME(robust, "w_e"))
 print(ggplot(tmp, aes(plate, diameter, color = sample)) +
@@ -222,13 +166,13 @@ print(ggplot(tmp, aes(plate, diameter, color = sample)) +
 
 
 ###################################################
-### code chunk number 14: sleepstudy-setup
+### code chunk number 13: sleepstudy-setup
 ###################################################
 source(file.path(rlmerDoc, "sleepstudy.R"))
 
 
 ###################################################
-### code chunk number 15: sleepstudy-raw
+### code chunk number 14: sleepstudy-raw
 ###################################################
 print(ggplot(sleepstudy, aes(Days, Reaction)) +
       stat_smooth(method=function(formula, ..., weights)
@@ -243,164 +187,29 @@ print(ggplot(sleepstudy, aes(Days, Reaction)) +
 
 
 ###################################################
-### code chunk number 16: sleepstudy-str
+### code chunk number 15: sleepstudy-str
 ###################################################
 str(sleepstudy)
 
 
 ###################################################
-### code chunk number 17: sleepstudy (eval = FALSE)
+### code chunk number 16: sleepstudy (eval = FALSE)
 ###################################################
 ## st(classical <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy))
 
 
 ###################################################
-### code chunk number 18: sleepstudy
+### code chunk number 17: sleepstudy3 (eval = FALSE)
 ###################################################
-st(classical <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy),
-   update.cache=TRUE)
+## st(robust <-
+##    rlmer(Reaction ~ Days + (Days|Subject), sleepstudy,
+##          rho.sigma.e = psi2propII(smoothPsi, k = 2.28),
+##          rho.sigma.b = chgDefaults(smoothPsi, k = 5.11, s=10)))
+## summary(robust)
 
 
 ###################################################
-### code chunk number 19: sleepstudy3
-###################################################
-st(robust <-
-   rlmer(Reaction ~ Days + (Days|Subject), sleepstudy,
-         rho.sigma.e = psi2propII(smoothPsi, k = 2.28),
-         rho.sigma.b = chgDefaults(smoothPsi, k = 5.11, s=10)))
-summary(robust)
-
-
-###################################################
-### code chunk number 20: sleepstudy-vars
-###################################################
-wgts <- matrix(wgt.b(robust), 2)[1,]
-names(wgts) <- rownames(ranef(robust)[[1]])
-lowest <- as.numeric(names(which.min(wgts)))
-w335 <- wgts["335"]
-
-
-###################################################
-### code chunk number 21: sleepstudy-ta
-###################################################
-plots <- plot(robust)
-lower <- floor(min(getME(robust, "w_e"), getME(robust, "w_b_vector"))*100)/100
-plots[[1]] + scale_colour_gradient(limits=c(lower,1)) +
-    theme(legend.position = "none")
-
-
-###################################################
-### code chunk number 22: sleepstudy-qq-resid
-###################################################
-plots[[2]] + scale_colour_gradient(limits=c(lower,1)) +
-    theme(legend.position = "none")
-
-
-###################################################
-### code chunk number 23: sleepstudy-qq-ranef
-###################################################
-plots[[3]] +
-    scale_colour_gradient("robustness weights", limits=c(lower,1)) +
-    theme(legend.position = "bottom", legend.box = "horizontal")
-
-
-###################################################
-### code chunk number 24: sleepstudy-ex-comparsion
-###################################################
-val <- g.get_colors_brewer(8)
-print(ggplot(cbind(sleepstudy, wgt.e=getME(robust, "w_e")),
-             aes(Days, Reaction)) +
-      stat_smooth(method=function(formula, ..., weights)
-                  lmrob(formula, ..., setting="KS2011"),
-                  se=FALSE) +
-      augLinesPop(classical, colour=val[1], linetype = 2) +
-      augLines(classical, colour=val[1]) +
-      ##augLinesSE(classical, colour=val[1]) +
-      augLinesPop(robust, colour=val[2], linetype = 2) +
-      augLines(robust, colour=val[2]) +
-      ##augLinesSE(robust, colour=val[2]) +
-      geom_point(aes(color=wgt.e)) +
-      scale_x_continuous(breaks=c(0,2,4,6,8)) +
-      scale_colour_gradient(expression(w[e]), limits=c(lower,1)) +
-      facet_wrap(~ Subject, nrow=3) +
-      xlab("Days of sleep deprivation") +
-      ylab("Average reaction time (ms)") +
-      theme(legend.position = "bottom", legend.box = "horizontal"))
-
-
-###################################################
-### code chunk number 25: sleepstudy-ex-comparsion-subsample
-###################################################
-val <- g.get_colors_brewer(8)
-mysub <- c(308, 335, 352)
-print(ggplot(subset(cbind(sleepstudy, wgt.e=getME(robust, "w_e")),
-                    Subject %in% mysub),
-             aes(Days, Reaction)) +
-      ## stat_smooth(method=function(formula, ..., weights)
-      ##             lmrob(formula, ..., setting="KS2011"),
-      ##             se=TRUE, alpha = 0.2) +
-      augLinesPop(classical, colour=val[1], linetype = 2,
-                  size = 0.5, subset = Subject %in% mysub) +
-      augLinesPopSE(classical, colour=val[1], fill=val[1], linetype = 2,
-                    size = 0.25, alpha = 0.1, subset = Subject %in% mysub) +
-      augLines(classical, colour=val[1],
-               size = 0.5, subset = Subject %in% mysub) +
-      augLinesSE(classical, colour=val[1], fill=val[1],
-                 size = 0.25, subset = Subject %in% mysub) +
-      augLinesPop(robust, colour=val[2], linetype = 2,
-                  size = 0.5, subset = Subject %in% mysub) +
-      augLinesPopSE(robust, colour=val[2], fill=val[2], linetype = 2,
-                    size = 0.25, alpha = 0.1, subset = Subject %in% mysub) +
-      augLines(robust, colour=val[2],
-               size = 0.5, subset = Subject %in% mysub) +
-      augLinesSE(robust, colour=val[2], fill=val[2],
-                 size = 0.25, subset = Subject %in% mysub) +
-      ## augLinesPop(redesc, colour=val[3], linetype = 2,
-      ##             size = 0.5, subset = Subject %in% mysub) +
-      ## augLinesPopSE(redesc, colour=val[3], fill=val[3], linetype = 2,
-      ##               size = 0.25, alpha = 0.1, subset = Subject %in% mysub) +
-      ## augLines(redesc, colour=val[3],
-      ##          size = 0.5, subset = Subject %in% mysub) +
-      ## augLinesSE(redesc, colour=val[3], fill=val[3],
-      ##            size = 0.25, alpha = 0.1, subset = Subject %in% mysub) +
-      geom_point(aes(color=wgt.e)) +
-      scale_x_continuous(breaks=c(0,2,4,6,8)) +
-      scale_colour_gradient(expression(w[e]), limits=c(lower,1)) +
-      facet_wrap(~ Subject, nrow=1) +
-      xlab("Days of sleep deprivation") +
-      ylab("Average reaction time (ms)") +
-      theme(legend.position = "bottom", legend.box = "horizontal"))
-
-
-###################################################
-### code chunk number 26: sleepstudy-fit-redescending
-###################################################
-st(redesc <-
-   update(robust, rho.e = chgDefaults(lqqPsi, cc=c(1.47, 0.98, 1.5)),
-          rho.sigma.e = chgDefaults(lqqPsi, cc=c(2.19, 1.46, 1.5)),
-          rho.b = chgDefaults(lqqPsi, cc=c(1.47, 0.98, 1.5)),
-          rho.sigma.b = chgDefaults(lqqPsi, cc=c(5.95, 3.97, 1.5))))
-summary(redesc)
-
-
-###################################################
-### code chunk number 27: sleepstudy-cmp
-###################################################
-print(xtable(compare(classical, robust, redesc, show.rho.functions=FALSE),
-      caption="Comparison table of the fitted models for the Sleepstudy example.",
-      label="tab:cmpSleepstudy"))
-
-
-###################################################
-### code chunk number 28: sleepstudy-ranef-scatterplot
-###################################################
-plots[[4]] + 
-      scale_colour_gradient(expression(w[b])) +
-      theme(legend.position = "bottom", legend.box = "horizontal")
-
-
-###################################################
-### code chunk number 29: smoothedHuber
+### code chunk number 18: smoothedHuber
 ###################################################
 xs <- seq.int(0, 3, length.out=100)
 data <- data.frame(x = xs,
@@ -415,7 +224,7 @@ print(ggplot(melt(data, 1),
 
 
 ###################################################
-### code chunk number 30: efficiency-table (eval = FALSE)
+### code chunk number 19: efficiency-table (eval = FALSE)
 ###################################################
 ## require(robustlmm)
 ## 
@@ -509,7 +318,7 @@ print(ggplot(melt(data, 1),
 
 
 ###################################################
-### code chunk number 31: efficiency-tables (eval = FALSE)
+### code chunk number 20: efficiency-tables (eval = FALSE)
 ###################################################
 ## ## dist functions
 ## dist <- function(b, kappa=kappa) {
