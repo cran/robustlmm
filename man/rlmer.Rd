@@ -9,7 +9,7 @@
     max.iter = 40 * (r + 1)^2, verbose = 0, doFit = TRUE,
     init)
 
-  lmerNoFit(..., initTheta)
+  lmerNoFit(formula, data = NULL, ..., initTheta)
 }
 \arguments{
   \item{formula}{a two-sided linear formula object
@@ -227,4 +227,3 @@ rlmer(Yield ~ (1|Batch), Dyestuff, init = lmerNoFit)
   \code{\link[lme4]{lmer}}, \code{vignette("rlmer")}
 }
 \keyword{models}
-
