@@ -47,8 +47,16 @@ if (FALSE) {
 setLoadAction(function(ns) setMethod("chgDefaults", signature("Rcpp_PsiFunction"), .chgDefaults))
 setLoadAction(function(ns) setMethod("chgDefaults", signature("Rcpp_HuberPsi"), .chgDefaults))
 setLoadAction(function(ns) setMethod("chgDefaults", signature("Rcpp_SmoothPsi"), .chgDefaults))
-setLoadAction(function(ns) setMethod("chgDefaults", signature("Rcpp_PsiFunction to Prop II PsiFunction wrapper"), .chgDefaults))
 
+if (FALSE) {
+  ## disable this for the time being, once enabled, also enable test in PsiFunction.R
+  .chgDefaultsPropII <- function(object, ...) {
+    base <- object$base()
+    return(psi2propII(base, ...))
+  }
+  setLoadAction(function(ns) setMethod("chgDefaults", signature("Rcpp_PsiFunction to Prop II PsiFunction wrapper"), .chgDefaultsPropII))
+}
+  
 .sprintPsiFunc <- function(x, short=FALSE) {
     v <- x$tDefs()
     n <- names(v)

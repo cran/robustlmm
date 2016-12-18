@@ -5,5 +5,6 @@
 #include <Rmath.h>
 #include <R_ext/Applic.h>
 #include "../inst/include/robustlmm.h"
+#include "Integration.h"
 
 #endif
