@@ -1,47 +1,17 @@
 #ifndef __robustlmm_h__
 #define __robustlmm_h__
 
-#include <R_ext/Applic.h>
 #include <Rcpp.h>
-
-class Integration {
-private:
-  int neval_, ier_, limit_, lenw_, last_;
-  double epsabs_, epsrel_, result_, noBound_, abserr_;
-  
-  int* iwork_;
-  double* work_;
-  
-public: 
-  Integration();
-  ~Integration(); 
-  
-  /* typedef void integr_fn(double *x, int n, void *ex); */
-  double integrateNInfInf(integr_fn f, void *ex);
-  double integrateAInf(integr_fn f, void *ex, double* bound);
-  double integrateNInfB(integr_fn f, void *ex, double* bound);
-  double integrateAB(integr_fn f, void *ex, double* a, double* b);
-  
-  int getNeval();
-  int getIer();
-  int getLast();
-  double getAbserr();
-  
-private:
-  void dqagi(integr_fn f, void *ex, double* bound, int inf);
-  void dqags(integr_fn f, void *ex, double* a, double* b);
-  void checkIer();
-};
 
 class PsiFunction {
 public:
   PsiFunction();
   
-  virtual const std::string name() const;
-  virtual const std::string show() const;
+  virtual const std::string name();
+  virtual const std::string show();
   virtual void chgDefaults(Rcpp::NumericVector tDefs);
-  virtual Rcpp::NumericVector tDefs() const;
-  virtual const std::string showDefaults() const;
+  virtual Rcpp::NumericVector tDefs() ;
+  virtual const std::string showDefaults();
   
   virtual const double rhoFun(const double x);
   virtual const double psiFun(const double x);
@@ -63,7 +33,7 @@ class PsiFunctionNumIntExp : public PsiFunction {
 public:
   PsiFunctionNumIntExp();
   
-  const std::string name() const;
+  const std::string name();
   void chgDefaults(Rcpp::NumericVector tDefs);
   
   virtual const double Erho();
@@ -76,7 +46,6 @@ private:
   double Erho_;
   double Epsi2_;
   double EDpsi_;
-  Integration integration_;
   
   void reset();
   

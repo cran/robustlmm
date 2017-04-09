@@ -440,3 +440,8 @@ predict.rlmerMod <- function(object, newdata=NULL,
     }
 }    
 
+##' @importFrom stats predict
+##' @S3method predict rlmerMod
+predict.rlmerMod <- getS3method("predict", "merMod")
+## the following is needed to get the correct getME() function:
+environment(predict.rlmerMod) <- environment()

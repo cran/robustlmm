@@ -72,8 +72,8 @@ const double PsiFunction::psi2Fun(const double x) {
 
 // class PsiFunctionNumIntExp 
 PsiFunctionNumIntExp::PsiFunctionNumIntExp() : 
-  PsiFunction() {
-    reset();
+  PsiFunction(), integration_(*(new DqagIntegration())) {
+  reset();
 }
 
 const std::string PsiFunctionNumIntExp::name() const {
@@ -103,7 +103,9 @@ const double PsiFunctionNumIntExp::EDpsi() {
   return EDpsi_;
 }
 
-PsiFunctionNumIntExp::~PsiFunctionNumIntExp() {}
+PsiFunctionNumIntExp::~PsiFunctionNumIntExp() {
+  delete &integration_;
+}
 
 void PsiFunctionNumIntExp::reset() {
   Erho_ = NA_REAL;
@@ -127,20 +129,24 @@ const double PsiFunctionNumIntExp::computeEDpsi() {
 double PsiFunctionNumIntExp::integrate(Fptr fptr) {
   const void *exc[2] = {this, &fptr};
   void **ex = const_cast<void**>(exc);
-  return integration_.integrateNInfInf(integrandNorm, ex);
+  return integration_.ninfInf(psiFunctionIntegrandNorm, ex);
 }
 
 // end class PsiFunctionNumIntExp
 
 // class PsiFunctionPropII
 PsiFunctionPropII::PsiFunctionPropII() : 
-  PsiFunctionNumIntExp(), base_(new SmoothPsi()) {
+  PsiFunctionNumIntExp(), base_(new SmoothPsi()), integration_(*(new DqagIntegration())) {
   // Rcpp::Rcout << "illegal contstructor called!!" << std::endl;
 }
 
 PsiFunctionPropII::PsiFunctionPropII(PsiFunction* base) : 
-  PsiFunctionNumIntExp(), base_(base) 
-  {}
+  PsiFunctionNumIntExp(), base_(base), integration_(*(new DqagIntegration())) 
+{}
+
+PsiFunctionPropII::~PsiFunctionPropII() {
+  delete &integration_;
+}
 
 const std::string PsiFunctionPropII::name() const {
   return base_->name() + ", Proposal II";
@@ -191,7 +197,7 @@ double PsiFunctionPropII::integrate(Fptr fptr, double b) {
   const void *exc[2] = {this, &fptr};
   void **ex = const_cast<void**>(exc);
   double a = 0.;
-  return integration_.integrateAB(integrand, ex, &a, &b);
+  return integration_.aB(psiFunctionIntegrand, ex, &a, &b);
 }
 
 // end class PsiFunctionPropII
@@ -463,7 +469,7 @@ NumericVector tDefs(PsiFunction* p) {
   return p->tDefs();
 }
 
-void integrand(double *x, const int n, void *const ex) {
+void psiFunctionIntegrand(double *x, const int n, void *const ex) {
   PsiFunction **pp = static_cast<PsiFunction**>(ex);
   PsiFunction *p = pp[0];
   
@@ -478,7 +484,7 @@ void integrand(double *x, const int n, void *const ex) {
   return;
 }
 
-void integrandNorm(double *x, const int n, void *const ex) {
+void psiFunctionIntegrandNorm(double *x, const int n, void *const ex) {
   PsiFunction **pp = static_cast<PsiFunction**>(ex);
   PsiFunction *p = pp[0];
   
@@ -525,12 +531,10 @@ RCPP_MODULE(psi_function_module) {
     .constructor<NumericVector>()
   ;
   
-  class_<PsiFunctionPropII>("PsiFunction to Prop II PsiFunction wrapper")
+  class_<PsiFunctionPropII>("PsiFunctionToPropIIPsiFunctionWrapper")
     .derives<PsiFunction>("PsiFunction")
     .constructor()
     .constructor<PsiFunction*>()
     .method("base", &PsiFunctionPropII::base)
   ;
 }
-
-
