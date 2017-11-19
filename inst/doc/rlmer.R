@@ -18,6 +18,7 @@ source(system.file("doc/Penicillin.R", package = "robustlmm"))
 ### code chunk number 3: plot-figure1 (eval = FALSE)
 ###################################################
 ## require(ggplot2)
+## require(reshape2)
 ## theme_set(theme_bw())
 ## print(ggplot(PenicillinC, aes(plate, diameter, color = sample)) +
 ##   geom_point(aes(shape = contaminated), size = 2.5) +
