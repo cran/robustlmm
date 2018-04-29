@@ -107,8 +107,8 @@ options(oldopts)
 ###################################################
 require(reshape2)
 xs <- seq.int(0, 3, length.out = 100)
-data <- data.frame(x = xs, Huber = huberPsiRcpp$psi(xs),
-  "Smoothed" = smoothPsi$psi(xs))
+data <- data.frame(x = xs, Huber = huberPsiRcpp@psi(xs),
+  "Smoothed" = smoothPsi@psi(xs))
 print(ggplot(melt(data, 1), aes(x, value, color = variable, 
   linetype = variable)) + geom_line() +
   scale_colour_hue(expression(paste(psi, "-function"))) +

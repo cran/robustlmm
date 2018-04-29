@@ -26,8 +26,8 @@ testKappaTau <- function(rho, wExp) {
     rho2 <- if (wExp == 2) psi2propII(rho) else rho
     kappa <- calcKappaTau(rho2, 1)
     fun <- switch(wExp,
-                  function(x) rho$psi(x)*x - kappa*rho$wgt(x),
-                  function(x) rho$psi(x)^2 - kappa*rho$wgt(x)^2)
+                  function(x) rho@psi(x)*x - kappa*rho@wgt(x),
+                  function(x) rho@psi(x)^2 - kappa*rho@wgt(x)^2)
     E(fun)
 }
 
@@ -46,9 +46,11 @@ E2 <- function(fun, ...) {
 }
 
 rfm <- rlmer(Yield ~ (1|Batch), Dyestuff)
+## FIXME make this an argument of the original call
+rfm@pp$initGH(50)
 
 testTau <- function(rho, rho.sigma, wExp, a, s) {
-    psi <- rho$psi
+    psi <- rho@psi
     rho.e <- rho.sigma
     rho.sigma2 <- if (wExp == 2) psi2propII(rho.sigma) else rho.sigma
     kappa <- calcKappaTau(rho.sigma2, 1)
@@ -56,18 +58,18 @@ testTau <- function(rho, rho.sigma, wExp, a, s) {
 
     fun <- switch(wExp + 1,
                   { ## wExp.e == 0:
-                      wgt <- function(x) ifelse(x == 0, rho.e$Dpsi(0)/2, rho$rho(x)/(x*x))
+                      wgt <- function(x) ifelse(x == 0, rho.e$Dpsi(0)/2, rho@rho(x)/(x*x))
                       function(w, v, tau) {
                           t <- (v-a[i]*psi(v)+w*s[i])/tau
-                          rho.e$rho(t) - kappa*wgt(t)
+                          rho.e@rho(t) - kappa*wgt(t)
                       } }, ## wExp.e == 1:
                   function(w, v, tau) {
                       t <- (v-a[i]*psi(v)+w*s[i])/tau
-                      rho.e$psi(t)*t - kappa*rho.e$wgt(t)
+                      rho.e@psi(t)*t - kappa*rho.e@wgt(t)
                   }, ## wExp.e == 2:
                   function(w, v, tau) {
                       t <- (v-a[i]*psi(v)+w*s[i])/tau
-                      rho.e$psi(t)^2 - kappa*rho.e$wgt(t)^2
+                      rho.e@psi(t)^2 - kappa*rho.e@wgt(t)^2
                   })
 
     tau <- calcTau(a, s, rho, rho.sigma2, rfm@pp, kappa)
@@ -75,6 +77,7 @@ testTau <- function(rho, rho.sigma, wExp, a, s) {
 
     ret <- tau
     for (i in seq_along(a)) ret[i] <- E2(fun, tau = tau[i])
+    print(ret)
 
     ret
 }
@@ -106,4 +109,5 @@ rfm2@pp$.setTau_e <- rfm@pp$.setTau_e
 rfm2@pp$.tau_e <- rfm@pp$.tau_e
 rfm2@pp$.setTbk <- rfm@pp$.setTbk
 rfm2@pp$.Tbk <- rfm@pp$.Tbk
+rfm@pp$initGH()
 stopifnot(all.equal(rfm, rfm2, tolerance = 1e-6))

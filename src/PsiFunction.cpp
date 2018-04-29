@@ -1,8 +1,13 @@
 #include "PsiFunction.h"
+#include <robustbase.h>
+#include <Rinternals.h>
 using namespace Rcpp;
 
+static const double DEFAULT_K = 1.345;
+static const double DEFAULT_S = 10.;
+
 #define DEBUG(STRING)                                          \
-// /Rcpp::Rcout << STRING << std::endl;
+// Rcpp::Rcout << STRING << std::endl;
 
 template <typename T> int sgn(T val) {
   return (T(0) < val) - (val < T(0));
@@ -11,22 +16,33 @@ template <typename T> int sgn(T val) {
 // class PsiFunction
 PsiFunction::PsiFunction() {}
 
-const std::string PsiFunction::name() const { 
-  return "classic (x^2/2)"; 
+const std::string PsiFunction::name() const {
+  return "classic (x^2/2)";
 }
 
 const std::string PsiFunction::show() const {
   return this->name() + " psi function" + this->showDefaults();
 }
 
-void PsiFunction::chgDefaults(NumericVector tuningParameters) {}
+
+void PsiFunction::chgDefaults(NumericVector tuningParameters) {
+  if (this->needToChgDefaults(tuningParameters)) {
+    this->doChgDefaults(tuningParameters);
+  }
+}
+
+bool PsiFunction::needToChgDefaults(NumericVector tuningParameters) {
+  return false;
+}
+
+void PsiFunction::doChgDefaults(NumericVector tuningParameters) {}
 
 NumericVector PsiFunction::tDefs() const {
   return NumericVector(0);
 }
 
 const std::string PsiFunction::showDefaults() const {
-  return "";  
+  return "";
 }
 
 double PsiFunction::rhoFun(const double x) {
@@ -70,8 +86,8 @@ double PsiFunction::psi2Fun(const double x) {
 
 // end class PsiFuncion
 
-// class PsiFunctionNumIntExp 
-PsiFunctionNumIntExp::PsiFunctionNumIntExp() : 
+// class PsiFunctionNumIntExp
+PsiFunctionNumIntExp::PsiFunctionNumIntExp() :
   PsiFunction(), integration_(*(new DqagIntegration())) {
   reset();
 }
@@ -80,9 +96,9 @@ const std::string PsiFunctionNumIntExp::name() const {
   return "PsiFunction with expectations computed using numerical integration";
 }
 
-void PsiFunctionNumIntExp::chgDefaults(NumericVector tuningParameters) {
+void PsiFunctionNumIntExp::doChgDefaults(NumericVector tuningParameters) {
   reset();
-  PsiFunction::chgDefaults(tuningParameters);
+  PsiFunction::doChgDefaults(tuningParameters);
 }
 
 double PsiFunctionNumIntExp::Erho() {
@@ -135,13 +151,13 @@ double PsiFunctionNumIntExp::integrate(Fptr fptr) {
 // end class PsiFunctionNumIntExp
 
 // class PsiFunctionPropII
-PsiFunctionPropII::PsiFunctionPropII() : 
+PsiFunctionPropII::PsiFunctionPropII() :
   PsiFunctionNumIntExp(), base_(new SmoothPsi()), integration_(*(new DqagIntegration())) {
   // Rcpp::Rcout << "illegal contstructor called!!" << std::endl;
 }
 
-PsiFunctionPropII::PsiFunctionPropII(PsiFunction* base) : 
-  PsiFunctionNumIntExp(), base_(base), integration_(*(new DqagIntegration())) 
+PsiFunctionPropII::PsiFunctionPropII(PsiFunction* base) :
+  PsiFunctionNumIntExp(), base_(base), integration_(*(new DqagIntegration()))
 {}
 
 PsiFunctionPropII::~PsiFunctionPropII() {
@@ -152,9 +168,13 @@ const std::string PsiFunctionPropII::name() const {
   return base_->name() + ", Proposal II";
 }
 
-void PsiFunctionPropII::chgDefaults(NumericVector x) {
-  base_->chgDefaults(x);
-  PsiFunctionNumIntExp::chgDefaults(x);
+bool PsiFunctionPropII::needToChgDefaults(NumericVector x) {
+  return base_->needToChgDefaults(x);
+}
+
+void PsiFunctionPropII::doChgDefaults(NumericVector x) {
+  base_->doChgDefaults(x);
+  PsiFunctionNumIntExp::doChgDefaults(x);
 }
 
 NumericVector PsiFunctionPropII::tDefs() const {
@@ -177,7 +197,7 @@ double PsiFunctionPropII::wgtFun(const double x) {
 }
 
 double PsiFunctionPropII::DpsiFun(const double x) {
-  return base_->wgtFun(x) * base_->DpsiFun(x) + 
+  return base_->wgtFun(x) * base_->DpsiFun(x) +
     base_->DwgtFun(x) * base_->psiFun(x);
 }
 
@@ -204,22 +224,30 @@ double PsiFunctionPropII::integrate(Fptr fptr, double b) {
 
 // class HuberPsi
 HuberPsi::HuberPsi() : PsiFunction() {
-  chgDefaults(NumericVector(0));
+  doChgDefaults(NumericVector(0));
 }
 
 HuberPsi::HuberPsi(NumericVector k) : PsiFunction() {
-  chgDefaults(k); 
+  doChgDefaults(k);
 }
 
 const std::string HuberPsi::name() const {
   return "Huber";
 }
 
-void HuberPsi::chgDefaults(NumericVector k) {
+bool HuberPsi::needToChgDefaults(NumericVector k) {
+  if (k.size() >= 1) {
+    return k_ != k[0];
+  } else {
+    return k_ != DEFAULT_K;
+  }
+}
+
+void HuberPsi::doChgDefaults(NumericVector k) {
   if (k.size() >= 1) {
     k_ = k[0];
   } else {
-    k_ = 1.345;
+    k_ = DEFAULT_K;
   }
 }
 
@@ -302,28 +330,46 @@ HuberPsi::~HuberPsi() {}
 
 // class SmoothPsi
 SmoothPsi::SmoothPsi() : PsiFunctionNumIntExp() {
-  chgDefaults(NumericVector(0));
+  doChgDefaults(NumericVector(0));
 }
 
 SmoothPsi::SmoothPsi(NumericVector tuningParameters) : PsiFunctionNumIntExp() {
-  chgDefaults(tuningParameters);
+  doChgDefaults(tuningParameters);
 }
 
 const std::string SmoothPsi::name() const {
   return "smoothed Huber";
 }
 
-void SmoothPsi::chgDefaults(NumericVector tuningParameters) {
-  PsiFunctionNumIntExp::chgDefaults(tuningParameters);
+bool SmoothPsi::needToChgDefaults(NumericVector tuningParameters) {
+  bool result = false;
+  if (tuningParameters.size() >= 1) {
+    result = k_ != tuningParameters[0];
+  } else {
+    result = k_ != DEFAULT_K;
+  }
+  if (result) {
+    return result;
+  }
+  if (tuningParameters.size() >= 2) {
+    result = s_ != tuningParameters[1];
+  } else {
+    result = s_ != DEFAULT_S;
+  }
+  return result;
+}
+
+void SmoothPsi::doChgDefaults(NumericVector tuningParameters) {
+  PsiFunctionNumIntExp::doChgDefaults(tuningParameters);
   if (tuningParameters.size() >= 1) {
     k_ = tuningParameters[0];
   } else {
-    k_ = 1.345;
+    k_ = DEFAULT_K;
   }
   if (tuningParameters.size() >= 2) {
     s_ = tuningParameters[1];
   } else {
-    s_ = 10.;
+    s_ = DEFAULT_S;
   }
   a_ = std::pow(s_, 1. / (s_ + 1.));
   c_ = k_ - std::pow(a_, -s_);
@@ -380,7 +426,7 @@ double SmoothPsi::DwgtFun(const double x) {
   if (ax <= c_) {
     return 0.;
   } else {
-    return std::pow(ax - d_, -s_ - 1.) * s_ / x - 
+    return std::pow(ax - d_, -s_ - 1.) * s_ / x -
       (k_ - std::pow(ax - d_, -s_)) / (x * ax);
   }
 }
@@ -393,14 +439,100 @@ const std::string SmoothPsi::showDefaults() const {
 
 // end class SmoothPsi
 
+// class RobustbasePsi
+RobustbasePsi::RobustbasePsi(NumericVector tuningParameters, int ipsi) : ipsi_(ipsi) {
+  chgDefaults(tuningParameters);
+}
+
+void RobustbasePsi::chgDefaults(NumericVector tuningParameters) {
+  PsiFunctionNumIntExp::chgDefaults(tuningParameters);
+  initialiseTuningParametersFromDefaults();
+  if (tuningParameters.hasAttribute("names")) {
+    chgDefaultsUsingNamedVector(tuningParameters);
+  } else {
+    chgDefaultsUsingPositionInVector(tuningParameters);
+  }
+}
+
+void RobustbasePsi::initialiseTuningParametersFromDefaults() {
+  if (tuningParameters_ != NULL)
+    return;
+  const NumericVector defaults = this->getDefaults();
+  tuningParameters_ = new double(defaults.size());
+  std::copy(defaults.begin(), defaults.end(), tuningParameters_);
+}
+
+void RobustbasePsi::chgDefaultsUsingNamedVector(const NumericVector &tuningParameters) {
+  const NumericVector defaults = this->getDefaults();
+  const std::vector<std::string> names(tuningParameters.attributeNames());
+  unsigned npar = tuningParameters.size();
+  R_ASSERT(names.size() == npar);
+  for (unsigned i = 0; i < npar; ++i) {
+    std::string name = names[i];
+    if (!defaults.containsElementNamed(name.data()))
+      throw std::invalid_argument("no tuning parameter for name " + name + ".");
+    tuningParameters_[defaults.findName(name)] = tuningParameters[i];
+  }
+}
+
+void RobustbasePsi::chgDefaultsUsingPositionInVector(const NumericVector &tuningParameters) {
+  std::copy(tuningParameters.begin(), tuningParameters.end(), tuningParameters_);
+}
+
+NumericVector RobustbasePsi::tDefs() const {
+  NumericVector defs(this->getDefaults());
+  std::copy(tuningParameters_, tuningParameters_ + defs.size(), defs.begin());
+  return defs;
+}
+
+const std::string RobustbasePsi::showDefaults() const {
+  std::vector<std::string> names = this->getDefaults().attributeNames();
+  std::stringstream ss;
+  ss << " (";
+  std::string sep = "";
+  for (unsigned i = 0; i < names.size(); i++) {
+    ss << sep <<  names[i] << " = " << tuningParameters_[i];
+    sep = ", ";
+  }
+  ss << ")";
+  return ss.str();
+}
+
+double RobustbasePsi::rhoFun(const double x) {
+  return C_rho(x, tuningParameters_, ipsi_);
+}
+
+double RobustbasePsi::psiFun(const double x) {
+  return C_psi(x, tuningParameters_, ipsi_);
+}
+
+double RobustbasePsi::DpsiFun(const double x) {
+  return C_psip(x, tuningParameters_, ipsi_);
+}
+
+double RobustbasePsi::wgtFun(const double x) {
+  return C_wgt(x, tuningParameters_, ipsi_);
+}
+
+double RobustbasePsi::DwgtFun(const double x) {
+  if (x == 0.) return 0;
+  return (DpsiFun(x) - wgtFun(x)) / x;
+}
+
+RobustbasePsi::~RobustbasePsi() {
+  delete(tuningParameters_);
+}
+
+// end class RobustbasePsi
+
 /*
  TODO: lqq, bisquare, etc, psi functions
- 
+
 lqqPsi <- psiFuncCached(rho = function(x, cc) Mpsi(x, cc, "lqq", -1),
   psi = function(x, cc) Mpsi(x, cc, "lqq", 0),
   Dpsi = function(x, cc) Mpsi(x, cc, "lqq", 1),
   wgt = function(x, cc) Mwgt(x, cc, "lqq"),
-  Dwgt = function(x, cc) 
+  Dwgt = function(x, cc)
   (Mpsi(x, cc, "lqq", 1) - Mwgt(x, cc, "lqq"))/x,
   name = "lqq",
   cc = c(-0.5, 1.5, 0.95, NA))
@@ -414,16 +546,16 @@ bisquarePsi <- psiFuncCached(rho = function(x, k) Mpsi(x, k, "biweight", -1),
  */
 
 std::string name(PsiFunction* p) {
-  return p->name(); 
+  return p->name();
 }
 
 void chgDefaults(PsiFunction* p, NumericVector x) {
-  return p->chgDefaults(x); 
+  return p->chgDefaults(x);
 }
 
 NumericVector compute(PsiFunction* p, Fptr fptr, NumericVector x) {
   NumericVector result(x.size());
-  for (int i = 0; i < x.size(); i++) {
+  for (unsigned i = 0; i < x.size(); i++) {
     result[i] = (p->*fptr)(x[i]);
   }
   return result;
@@ -468,37 +600,48 @@ NumericVector tDefs(PsiFunction* p) {
 void psiFunctionIntegrand(double *x, const int n, void *const ex) {
   PsiFunction **pp = static_cast<PsiFunction**>(ex);
   PsiFunction *p = pp[0];
-  
+
   const Fptr **const pfptr  = static_cast<const Fptr **const>(ex);
   const Fptr *fptr = pfptr[1];
-  
+
   for (int i = 0; i < n; i++) {
-    double value = x[i];  
+    double value = x[i];
     x[i] = (p->**fptr)(value);
   }
-  
+
   return;
 }
 
 void psiFunctionIntegrandNorm(double *x, const int n, void *const ex) {
   PsiFunction **pp = static_cast<PsiFunction**>(ex);
   PsiFunction *p = pp[0];
-  
+
   const Fptr **const pfptr  = static_cast<const Fptr **const>(ex);
   const Fptr *fptr = pfptr[1];
-  
+
   for (int i = 0; i < n; i++) {
-    double value = x[i];  
+    double value = x[i];
     x[i] = (p->**fptr)(value) * stats::dnorm_0(value, 0);
   }
-  
+
   return;
 }
 
+extern "C" {
+
+  SEXP isnull(SEXP pointer) {
+    return Rf_ScalarLogical(!R_ExternalPtrAddr(pointer));
+  }
+
+  SEXP deepcopy(SEXP x) {
+    return(Rf_duplicate(x));
+  }
+
+}
 
 RCPP_EXPOSED_CLASS(PsiFunction)
 RCPP_MODULE(psi_function_module) {
-  
+
   class_<PsiFunction>("PsiFunction")
   .constructor()
   .method("name", &name)
@@ -514,23 +657,26 @@ RCPP_MODULE(psi_function_module) {
   .method("show", &PsiFunction::show)
   .method("tDefs", &tDefs)
   ;
-  
+
   class_<HuberPsi>("HuberPsi")
     .derives<PsiFunction>("PsiFunction")
     .constructor()
     .constructor<NumericVector>()
   ;
-  
+
   class_<SmoothPsi>("SmoothPsi")
     .derives<PsiFunction>("PsiFunction")
     .constructor()
     .constructor<NumericVector>()
   ;
-  
+
   class_<PsiFunctionPropII>("PsiFunctionToPropIIPsiFunctionWrapper")
     .derives<PsiFunction>("PsiFunction")
     .constructor()
     .constructor<PsiFunction*>()
     .method("base", &PsiFunctionPropII::base)
   ;
+
+  function("isnull", &isnull);
+  function("deepcopy", &deepcopy);
 }
