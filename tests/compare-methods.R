@@ -6,7 +6,7 @@ fit <- function(formula, data, methods =  c("DASvar", "DAStau"),
     fits <- list()
     ## compare with result of lmer if rho arguments are not given
     classic <- ! any(c("rho.e", "rho.b") %in% names(match.call())[-1])
-    if (classic) fm <- lmer(formula, data)
+    if (classic) fm <- lmer(formula, data, control=lmerControl(optimizer="bobyqa"))
     for (method in methods) {
         fits[[method]] <- list()
         if (classic) fits[[method]][["lmer"]] <- fm
@@ -22,7 +22,8 @@ fit <- function(formula, data, methods =  c("DASvar", "DAStau"),
                  ## compare with lmer fit
                  cat("#### Checking equality with lmer... ####\n")
                  cat("Fixed effects: ", all.equal(fixef(fm), fixef(m), tolerance = 1e-4), "\n")
-                 cat("Random effects:", all.equal(ranef(fm), ranef(m), tolerance = 1e-4,
+                 ranef.fm <- ranef(fm, condVar=FALSE)# lme4 now has default  condVar=TRUE
+                 cat("Random effects:", all.equal(ranef.fm, ranef(m), tolerance = 1e-4,
                                                   check.attributes=FALSE), "\n")
                  cat("Theta:         ", all.equal(theta(fm), theta(m), tolerance = 1e-4), "\n")
                  cat("Sigma:         ", all.equal(sigma(fm), sigma(m), tolerance = 1e-4), "\n")
