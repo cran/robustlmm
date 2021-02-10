@@ -79,7 +79,7 @@ rfm2 <- update(rfm, rho.sigma.e = psi2propII(smoothPsi, k = 2.28),
 ### code chunk number 11: updatePC2
 ###################################################
 rsb <- list(psi2propII(smoothPsi), psi2propII(smoothPsi, k = 2.28))
-rfm3 <- update(rfm2, rho.sigma.b = rsb) 
+rfm3 <- update(rfm2, rho.sigma.b = rsb)
 
 
 ###################################################
@@ -108,7 +108,7 @@ require(reshape2)
 xs <- seq.int(0, 3, length.out = 100)
 data <- data.frame(x = xs, Huber = huberPsiRcpp@psi(xs),
   "Smoothed" = smoothPsi@psi(xs))
-print(ggplot(melt(data, 1), aes(x, value, color = variable, 
+print(ggplot(melt(data, 1), aes(x, value, color = variable,
   linetype = variable)) + geom_line() +
   scale_colour_hue(expression(paste(psi, "-function"))) +
   scale_linetype_discrete(expression(paste(psi, "-function"))) +
@@ -136,7 +136,7 @@ print(ggplot(melt(data, 1), aes(x, value, color = variable,
 ## kappa <- robustlmm:::calcKappaTau(rfm@rho.sigma.b[[1]])
 ## fun <- function(theta, rfm) {
 ##   robustlmm:::theta(rfm) <- theta
-##   T <- diag(robustlmm:::len(rfm, "b")) - 
+##   T <- diag(robustlmm:::len(rfm, "b")) -
 ##     robustlmm:::rho.b(rfm)[[1]]@EDpsi() * (rfm@pp$L + t(rfm@pp$L)) +
 ##     robustlmm:::rho.e(rfm)@Epsi2() * crossprod(rfm@pp$Kt) +
 ##     robustlmm:::rho.b(rfm)[[1]]@Epsi2() * tcrossprod(rfm@pp$L)
@@ -159,8 +159,8 @@ print(ggplot(melt(data, 1), aes(x, value, color = variable,
 ## ## plot
 ## test.1 <- melt(test.1, "theta")
 ## print(ggplot(test.1, aes(theta, value, color = variable)) +
-##   geom_line() + geom_vline(xintercept = c(true, false), linetype = 2) +      
-##   scale_x_continuous(breaks = c(0:3, false, true), 
+##   geom_line() + geom_vline(xintercept = c(true, false), linetype = 2) +
+##   scale_x_continuous(breaks = c(0:3, false, true),
 ##     labels = c(0:3, expression(theta^"\u2020"), expression(hat(theta)))) +
 ##   xlab(expression(theta)) + geom_hline(yintercept = 0) +
 ##   theme(legend.position = "bottom", legend.box = "horizontal"))

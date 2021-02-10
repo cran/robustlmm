@@ -1,4 +1,4 @@
-dc490149aa9216302a2c20c3751b1112 *DESCRIPTION
+cdc5d63a2c5445869c387922ba7a3972 *DESCRIPTION
 a8cd655a8a04a3931522d445affbca5e *NAMESPACE
 825d96d26ed33e0f203aea63e430db1d *R/AllClass.R
 ad67d20fb185bd524765c8493935a50f *R/AllGeneric.R
@@ -15,14 +15,14 @@ cbdfd059c92ff07ee16e05394074c80b *R/mutators.R
 dfcd8220d509031251496c006dd92f89 *R/psiFunc2.R
 ebaa948d79173b835b9b9db516a9565a *R/rlmer.R
 17657d0df1605cce1577b3c93c9b6c93 *README.md
-9fa467d0bf952eccaa852405eb22349f *build/vignette.rds
+41565ece4a26351b7784aae004ef1591 *build/vignette.rds
 e21514a5d035305feb87d0c632a2fd0c *inst/CITATION
 8f6ce647725b8e9eb970588ef0b46470 *inst/doc/Penicillin.R
 9e886c21e762bea7b5588712c241b544 *inst/doc/ggplot.theme.R
 d78dc8346d539134cad1159927e73c0f *inst/doc/plots.R
-7d67d9e3b199cb2b3d0fcd56c233f199 *inst/doc/rlmer.R
-f87377313db27fb1af571f854b17f79d *inst/doc/rlmer.Rnw
-857bffb0ccb7dcbf025a47ca681112ba *inst/doc/rlmer.pdf
+18943e8a8d0a808d1b5f57cfeecacfb7 *inst/doc/rlmer.R
+f5de1d1ada189b118697f19ceff9ac61 *inst/doc/rlmer.Rnw
+d2d69c22611837387f1f83b40f286d0b *inst/doc/rlmer.pdf
 2248943be35ee75dee6372f97021fb45 *inst/doc/sleepstudy.R
 b306372c844cce51f7807e93a872a4e1 *inst/xtraR/DAS-scale-Rimpl.R
 dccc10f2ea444bf8f29874dc5bbec723 *inst/xtraR/unitTestBase.R
@@ -93,9 +93,8 @@ b215e2abc58a35ff73d551fa51610cbf *vignettes/Figures/fig-ex-penicillin-contaminat
 66e4632cf6af39507e8940b6270f3ec7 *vignettes/efficiency-table-B-optimal.tex
 00cda1d762b845cf2aa14e96110cefea *vignettes/efficiency-table-lqq-locationScale.tex
 84308501dd59a119f38156422469bf4f *vignettes/efficiency-table-lqq.tex
-41b8a56e1df950bf404830a7800ed6b8 *vignettes/jss.dtx
 f3417404ea7938390caebabd31b2b4a1 *vignettes/jsslogo.pdf
-f87377313db27fb1af571f854b17f79d *vignettes/rlmer.Rnw
+f5de1d1ada189b118697f19ceff9ac61 *vignettes/rlmer.Rnw
 bb21d820844d1ad92c4b21b1c9a983a2 *vignettes/rlmer.bib
-3d3176136acf6b2d43b189a1b5a955ab *vignettes/rlmer.sty
+e36d479eeeaa8a51e3ba633ef6b8b540 *vignettes/rlmer.sty
 628b89560cf9240268c0d60a1dd514c6 *vignettes/tuning-constants-table.tex
