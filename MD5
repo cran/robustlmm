@@ -1,4 +1,4 @@
-78daf6c4ff5aa03e79a32f4a575eafcf *DESCRIPTION
+905628f46b6909117eca6222155bd63b *DESCRIPTION
 a8cd655a8a04a3931522d445affbca5e *NAMESPACE
 825d96d26ed33e0f203aea63e430db1d *R/AllClass.R
 ad67d20fb185bd524765c8493935a50f *R/AllGeneric.R
@@ -15,14 +15,14 @@ cbdfd059c92ff07ee16e05394074c80b *R/mutators.R
 dfcd8220d509031251496c006dd92f89 *R/psiFunc2.R
 ebaa948d79173b835b9b9db516a9565a *R/rlmer.R
 17657d0df1605cce1577b3c93c9b6c93 *README.md
-63f98690410ca424e3e17c97c402e82f *build/vignette.rds
+75d1d663b1b0bd9d8cacc6e6e10accba *build/vignette.rds
 e21514a5d035305feb87d0c632a2fd0c *inst/CITATION
 8f6ce647725b8e9eb970588ef0b46470 *inst/doc/Penicillin.R
 9e886c21e762bea7b5588712c241b544 *inst/doc/ggplot.theme.R
 d78dc8346d539134cad1159927e73c0f *inst/doc/plots.R
 18943e8a8d0a808d1b5f57cfeecacfb7 *inst/doc/rlmer.R
 f5de1d1ada189b118697f19ceff9ac61 *inst/doc/rlmer.Rnw
-df0cd5d3a436335572128fd15801f69b *inst/doc/rlmer.pdf
+27e2bef1f852b8452bbf545ecca483a1 *inst/doc/rlmer.pdf
 2248943be35ee75dee6372f97021fb45 *inst/doc/sleepstudy.R
 b306372c844cce51f7807e93a872a4e1 *inst/xtraR/DAS-scale-Rimpl.R
 dccc10f2ea444bf8f29874dc5bbec723 *inst/xtraR/unitTestBase.R
@@ -53,11 +53,11 @@ ad1c31283de8fa408e639b98d296619d *src/Fitter.cpp
 92c40aee65627c37a27548ea1d77a40d *src/Fitter.h
 cd9b76474fb135a4d407dd250f41cfcd *src/Integration.cpp
 999d28587d0fd2e8844c39a4f03e77b9 *src/Integration.h
-64c8a0089241e179dca28f9f4a3ee502 *src/Makevars
-64c8a0089241e179dca28f9f4a3ee502 *src/Makevars.win
+b4fa667b9cdfd29bbe921c1881e665ae *src/Makevars
+b4fa667b9cdfd29bbe921c1881e665ae *src/Makevars.win
 2d2f578f66bf313494703e408cd64593 *src/PsiFunction.cpp
 d41a8e3edbc4ff25f4067d146c9d5460 *src/PsiFunction.h
-98c29caa313c1f26fd070ef3f6a613ad *src/fastGHQuad.cpp
+9a432e3973a9f41fc12501f0a593cba2 *src/fastGHQuad.cpp
 9031825ae6d8747dcf214fc8bf9aa7df *src/fastGHQuad.h
 6a6fa68f1edc4efdbcce40716cf7fb66 *src/globals.h
 50919ff14ff65c2854af6fe0c0ae6125 *src/helpers.cpp
@@ -80,7 +80,7 @@ f5769a8a14ac7cf9057d91c5dc1fe7d8 *tests/compare-methods.Rout.save
 5fadb7990948b3207aa07951ecbd3722 *tests/expectations.R
 2672617acd6cebb37d26d26397c0abc2 *tests/genericFunctions.R
 97cad4d75455d77a605d1bec3163a508 *tests/getME.R
-6a6ad81ce55b695e30e4965e0ce98b24 *tests/getME.Rout.save
+b679e74be67ac4026a9f80f47076bb33 *tests/getME.Rout.save
 1887b4cbe11937f459a03b1c4e89079e *tests/multipleGroupingFactorsTestData.R
 9b2b5429270d49a8b515bcd6eafeff70 *tests/psi-rho-funs.R
 0cd775117ff239f4da4e93af3ea86ee8 *tests/rlmerMod.R

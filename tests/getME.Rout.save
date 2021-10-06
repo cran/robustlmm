@@ -1,7 +1,7 @@
 
-R version 3.5.2 (2018-12-20) -- "Eggshell Igloo"
-Copyright (C) 2018 The R Foundation for Statistical Computing
-Platform: x86_64-apple-darwin15.6.0 (64-bit)
+R Under development (unstable) (2021-10-04 r81004) -- "Unsuffered Consequences"
+Copyright (C) 2021 The R Foundation for Statistical Computing
+Platform: x86_64-apple-darwin17.0 (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
@@ -224,7 +224,8 @@ Name: offset
  num [1:180] 0 0 0 0 0 0 0 0 0 0 ...
 
 Name: lower 
- num [1:4] 0 -Inf 0 0
+ Named num [1:4] 0 -Inf 0 0
+ - attr(*, "names")= chr [1:4] "Subject.(Intercept)" "Subject.Days.(Intercept)" "Subject.Days" "Group.(Intercept)"
 
 Name: rho_e 
 smoothed Huber psi function (k = 1.345, s = 10) 
@@ -370,7 +371,8 @@ List of 34
   ..$ dims: Named int [1:12] 180 180 2 178 40 4 1 2 0 2 ...
   .. ..- attr(*, "names")= chr [1:12] "N" "n" "p" "nmp" ...
  $ offset          : num [1:180] 0 0 0 0 0 0 0 0 0 0 ...
- $ lower           : num [1:4] 0 -Inf 0 0
+ $ lower           : Named num [1:4] 0 -Inf 0 0
+  ..- attr(*, "names")= chr [1:4] "Subject.(Intercept)" "Subject.Days.(Intercept)" "Subject.Days" "Group.(Intercept)"
  $ M               :List of 5
   ..$ M_bb.:Formal class 'dgeMatrix' [package "Matrix"] with 4 slots
   ..$ M_XZ :Formal class 'dgeMatrix' [package "Matrix"] with 4 slots
@@ -391,4 +393,4 @@ List of 34
 > 
 > proc.time()
    user  system elapsed 
-  4.192   0.251   4.510 
+  4.193   0.228   4.412 
