@@ -1,7 +1,7 @@
 
-R Under development (unstable) (2021-10-04 r81004) -- "Unsuffered Consequences"
+R version 4.1.2 (2021-11-01) -- "Bird Hippie"
 Copyright (C) 2021 The R Foundation for Statistical Computing
-Platform: x86_64-apple-darwin17.0 (64-bit)
+Platform: aarch64-apple-darwin20 (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
@@ -300,13 +300,13 @@ Name: w_e
 Name: w_b 
 List of 2
  $ Subject:'data.frame':	18 obs. of  2 variables:
-  ..$ (Intercept): num [1:18] 0.859 0.634 0.756 0.984 1 ...
-  ..$ Days       : num [1:18] 0.859 0.634 0.756 0.984 1 ...
+  ..$ (Intercept): num [1:18] 0.557 0.299 0.427 0.794 1 ...
+  ..$ Days       : num [1:18] 0.557 0.299 0.427 0.794 1 ...
  $ Group  :'data.frame':	4 obs. of  1 variable:
   ..$ (Intercept): num [1:4] 1 1 1 1
 
 Name: w_b_vector 
- num [1:40] 0.859 0.859 0.634 0.634 0.756 ...
+ num [1:40] 0.557 0.557 0.299 0.299 0.427 ...
 
 Name: w_sigma_e 
  num [1:180] 1 1 1 1 1 ...
@@ -314,13 +314,13 @@ Name: w_sigma_e
 Name: w_sigma_b 
 List of 2
  $ Subject:'data.frame':	18 obs. of  2 variables:
-  ..$ (Intercept): num [1:18] 0.859 0.634 0.756 0.984 1 ...
-  ..$ Days       : num [1:18] 0.859 0.634 0.756 0.984 1 ...
+  ..$ (Intercept): num [1:18] 0.878 0.258 0.524 1 1 ...
+  ..$ Days       : num [1:18] 0.878 0.258 0.524 1 1 ...
  $ Group  :'data.frame':	4 obs. of  1 variable:
   ..$ (Intercept): num [1:4] 1 1 1 1
 
 Name: w_sigma_b_vector 
- num [1:40] 0.859 0.859 0.634 0.634 0.756 ...
+ num [1:40] 0.878 0.878 0.258 0.258 0.524 ...
 
 Name: is_REML 
  logi 1
@@ -383,14 +383,14 @@ List of 34
  $ w_b             :List of 2
   ..$ Subject:'data.frame':	18 obs. of  2 variables:
   ..$ Group  :'data.frame':	4 obs. of  1 variable:
- $ w_b_vector      : num [1:40] 0.859 0.859 0.634 0.634 0.756 ...
+ $ w_b_vector      : num [1:40] 0.557 0.557 0.299 0.299 0.427 ...
  $ w_sigma_e       : num [1:180] 1 1 1 1 1 ...
  $ w_sigma_b       :List of 2
   ..$ Subject:'data.frame':	18 obs. of  2 variables:
   ..$ Group  :'data.frame':	4 obs. of  1 variable:
- $ w_sigma_b_vector: num [1:40] 0.859 0.859 0.634 0.634 0.756 ...
+ $ w_sigma_b_vector: num [1:40] 0.878 0.878 0.258 0.258 0.524 ...
  $ is_REML         : logi 1
 > 
 > proc.time()
    user  system elapsed 
-  4.193   0.228   4.412 
+  1.371   0.076   1.442 

@@ -1,6 +1,11 @@
 ##' Robust estimation of linear mixed effects models, for hierarchical
 ##' nested and non-nested, e.g., crossed, datasets.
 ##'
+##' The \code{lmerNoFit} function can be used to get trivial
+##' starting values. This is mainly used to verify the algorithms to
+##' reproduce the fit by \code{\link{lmer}} when starting from trivial
+##' initial values.
+##'
 ##' \describe{
 ##' \item{Overview:}{
 ##' This function implements a robust approach of fitting linear mixed
@@ -56,12 +61,12 @@
 ##' for simple variance components and for such including correlation
 ##' parameters. By default, they are chosen appropriately to the model
 ##' at hand. However, when using the \code{rho.sigma.e} and
-##' \code{rho.sigma.b} arguments, it is up to the used to specify
+##' \code{rho.sigma.b} arguments, it is up to the user to specify
 ##' the appropriate function.
 ##' \itemize{
 ##' \item For simple variance components and the residual error scale
 ##' use the function \code{\link{psi2propII}} to change the tuning
-##' parameters. The is similar to Proposal II in the location-scale
+##' parameters. This is similar to Proposal II in the location-scale
 ##' problem (i.e., using the squared robustness weights of the
 ##' location estimate for the scale estimate; otherwise the scale
 ##' estimate is not robust).
@@ -152,12 +157,15 @@
 ##'   \sQuote{sigma}, \sQuote{theta}, or a function producing an lmerMod
 ##'   object.
 ##' @return object of class rlmerMod.
-##' @seealso \code{\link[lme4]{lmer}}
+##' @seealso \code{\link[lme4]{lmer}}, \code{vignette("rlmer")}
 ##' @author Manuel Koller, with thanks to Vanda Lourenço for improvements.
 ##' @keywords models
 ##' @examples
 ##' ## dropping of VC
 ##' system.time(print(rlmer(Yield ~ (1|Batch), Dyestuff2, method="DASvar")))
+##'
+##' ## new Rcpp implementation
+##' system.time(print(rlmerRcpp(Yield ~ (1|Batch), Dyestuff2, method="DASvar")))
 ##'
 ##' \dontrun{
 ##'   ## Default method "DAStau"
@@ -179,11 +187,13 @@
 ##'   ## correlation terms (regular, non squared weights suffice)
 ##'   rlmer(Reaction ~ Days + (Days|Subject), sleepstudy,
 ##'         rho.sigma.e = psi2propII(smoothPsi, k = 2.28),
+##'         rho.b = chgDefaults(smoothPsi, k = 5.11, s=10),
 ##'         rho.sigma.b = chgDefaults(smoothPsi, k = 5.11, s=10))
-## }
+##' }
 ##'
 ##' @importFrom lme4 lmer
 ##' @importFrom stats getCall
+##' @rdname rlmer
 ##' @export
 rlmerRcpp <- function(formula, data, ..., method = "DAStau",
                       rho.e = smoothPsi, rho.b = smoothPsi,
