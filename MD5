@@ -1,4 +1,4 @@
-2d9871467e04f25605312dc25951ca3d *DESCRIPTION
+f8cc63925daf9d80b22f3f28437dfcb0 *DESCRIPTION
 a8cd655a8a04a3931522d445affbca5e *NAMESPACE
 825d96d26ed33e0f203aea63e430db1d *R/AllClass.R
 12488c3254bd21b8a89a4e21b6059f86 *R/AllGeneric.R
@@ -22,7 +22,7 @@ e21514a5d035305feb87d0c632a2fd0c *inst/CITATION
 d78dc8346d539134cad1159927e73c0f *inst/doc/plots.R
 18943e8a8d0a808d1b5f57cfeecacfb7 *inst/doc/rlmer.R
 f5de1d1ada189b118697f19ceff9ac61 *inst/doc/rlmer.Rnw
-e5c57ecefe6472f6be4886a59de5bd11 *inst/doc/rlmer.pdf
+45c71d12df9ac671948679882e9c84b8 *inst/doc/rlmer.pdf
 2248943be35ee75dee6372f97021fb45 *inst/doc/sleepstudy.R
 6ec760d632c9f3a490df91db993538d5 *inst/xtraR/DAS-scale-Rimpl.R
 dccc10f2ea444bf8f29874dc5bbec723 *inst/xtraR/unitTestBase.R
@@ -31,7 +31,7 @@ eef95172aaf6fda08572f44baa185c76 *inst/xtraR/unitTests-Integration.R
 5b68de699f330bfdebb9f745f26bec68 *inst/xtraR/unitTests-objs.R
 3f5544a8e085a0f3c0586bdcdde647b0 *inst/xtraR/unitTests-rlmerPredD.R
 09c52f74faaba08f3327b14950949c1e *inst/xtraR/unitTests-rlmerPredD_DAS.R
-b5cec4a2a4df8608ad3104bc5991954a *inst/xtraR/unitTests-rlmerPredD_DAStau.R
+d6dd4d3a6828b6b9da4a7ca0eb89993b *inst/xtraR/unitTests-rlmerPredD_DAStau.R
 e9b8298ac1cfb688ef8838cc9c4f5fd0 *inst/xtraR/unitTests-rlmerResp.R
 74c1bf0735f5ec61956024c25c3f6e7a *man/chgDefaults.Rd
 471c6c23b72868c40e2e8b7f037df6f3 *man/compare.Rd
@@ -76,11 +76,11 @@ db9f63e38d171df0511880fc3c026478 *src/rlmerRespModule.cpp
 836b11985305ee89a26e06fa73222757 *tests/DAS-scale.R
 05dcdfe34ea743d73920b9f809ea74f0 *tests/PsiFunction.R
 2c436295a75f59452576005cf11d039c *tests/compare-methods.R
-459f838aab6041cc4975546d053129c7 *tests/compare-methods.Rout.save
+157a7215fd7cdc6cea7ca6e76e8cbca9 *tests/compare-methods.Rout.save
 bfeecaea4478a6188e70b4d89f4e1a31 *tests/expectations.R
 2672617acd6cebb37d26d26397c0abc2 *tests/genericFunctions.R
 97cad4d75455d77a605d1bec3163a508 *tests/getME.R
-333de39754a54c8f684675f6acb94c4a *tests/getME.Rout.save
+5da2683c4dd6a59fbc388ebb04682af3 *tests/getME.Rout.save
 1887b4cbe11937f459a03b1c4e89079e *tests/multipleGroupingFactorsTestData.R
 9b2b5429270d49a8b515bcd6eafeff70 *tests/psi-rho-funs.R
 0cd775117ff239f4da4e93af3ea86ee8 *tests/rlmerMod.R
