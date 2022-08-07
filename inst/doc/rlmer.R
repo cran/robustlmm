@@ -10,7 +10,13 @@ options(width = 60, str = strOptions(vec.len = 1.4), prompt = 'R> ', continue = 
 ### code chunk number 2: init
 ###################################################
 require("robustlmm")
-source(system.file("doc/Penicillin.R", package = "robustlmm"))
+warning("Current dir: ", system.file("", package = "robustlmm"), " has contents: ",
+        paste(list.files(system.file("", package = "robustlmm")), collapse = ", "))
+warning("doc dir: ", system.file("doc", package = "robustlmm"), " has contents: ",
+        paste(list.files(system.file("doc", package = "robustlmm")), collapse = ", "))
+filename <- system.file("doc/Penicillin.R", package = "robustlmm", mustWork = TRUE)
+warning("Filename: ", filename)
+source(filename)
 
 
 ###################################################
