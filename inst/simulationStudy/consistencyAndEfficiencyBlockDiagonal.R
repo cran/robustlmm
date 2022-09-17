@@ -266,37 +266,3 @@ plot_efficiencyBlockDiagonal <-
 if (interactive()) {
     print(plot_efficiencyBlockDiagonal)
 }
-
-if (FALSE) {
-
-data <- datasets$generateData(1)
-rho.e <- newFit[[1]]@rho.e
-rho.b <- newFit[[1]]@rho.b
-rho.sigma.e <- newFit[[1]]@rho.sigma.e
-rho.sigma.b <- newFit[[1]]@rho.sigma.b
-
-save(data, rho.e, rho.b, rho.sigma.e, rho.sigma.b, file = "/tmp/testData.Rdata")
-load("/tmp/testData.Rdata")
-require(robustlmm)
-
-notFitted <- rlmer(Reaction ~ Days + (Days | Subject),
-                   data = data,
-                   rho.e = rho.e,
-                   rho.b = rho.b,
-                   rho.sigma.e = rho.sigma.e,
-                   rho.sigma.b = rho.sigma.b,
-                   verbose = 5)
-str(notFitted)
-
-deltaT <- matrix(c(1.00031, 0, 0, 0), 2)
-Ubtilde <- matrix(c(0.4669271, 0.1635338, 0, 0), 2)
-tcrossprod(Ubtilde, deltaT)
-
-deltaTM <- Matrix(deltaT)
-UbtildeM <- Matrix(Ubtilde)
-tcrossprod(UbtildeM, deltaTM)
-
-deltaTs <- as(as(as(deltaT, "dMatrix"), "symmetricMatrix"), "CsparseMatrix")
-tcrossprod(Ubtilde, deltaTs)
-
-}

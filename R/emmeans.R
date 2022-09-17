@@ -32,5 +32,4 @@ emm_basis.rlmerMod <- function(object, trms, xlev, grid, vcov., ...) {
     if (requireNamespace("emmeans", quietly = TRUE)) {
         emmeans::.emm_register("rlmerMod", pkgname)
     }
-    options(Matrix.warnDeprecatedCoerce = 2)
 }
