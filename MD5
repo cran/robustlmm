@@ -1,4 +1,4 @@
-a35dbdf1227f22f17d183b9a20618993 *DESCRIPTION
+ca7cd72cea21565a51963dc3b386ba05 *DESCRIPTION
 dcd49926e8c5797c7ceb1793011b290e *NAMESPACE
 c66d6bf278f5a60af4b886e2dcdc7281 *R/AllClass.R
 9c23e53d9a44511367bd920de7304079 *R/AllGeneric.R
@@ -18,7 +18,7 @@ f734463628ac35bfda7b1042cb329439 *R/lmer.R
 0c7e21eaf41d98627b74400951330fc2 *R/manageDatasets.R
 1814321f5b12ac594d93bfce29060b9a *R/mutators.R
 21e9beb4dc7b28b8ade1f49e7b97f74e *R/plot.R
-5e0e6e6ad6666158d3662f901f0ff467 *R/processFile.R
+99a0e4332cc32954f54e16a898045e4b *R/processFile.R
 67bd1497e17ed99e075934f18b15268b *R/processFit.R
 d5b11cba6860e30b2b7cdd248e5696f3 *R/psiFunc2.R
 ac01ad1bafd88bde0aee1a341acbf68e *R/rlmer.R
@@ -31,10 +31,10 @@ c998a71068aa5c8557b380d4fd41a918 *inst/doc/Penicillin.R
 d78dc8346d539134cad1159927e73c0f *inst/doc/plots.R
 8cd357cab2d5ba299addc361f9f0c748 *inst/doc/rlmer.R
 34af96c5afa16d6def1dd03b86760bef *inst/doc/rlmer.Rnw
-a7c215b7e33ff915118503e689fd646d *inst/doc/rlmer.pdf
+e385ec8565a67b3f1fd99af5356e63ec *inst/doc/rlmer.pdf
 da8ecd990f3981e5c0ccc6fb725b5e8b *inst/doc/simulationStudies.R
 c32ba0ab27e4b8e31639c140c12bafd6 *inst/doc/simulationStudies.Rnw
-07ca8745fde0945ed6a263206e49af70 *inst/doc/simulationStudies.pdf
+cdd5f44cd8422382932dfdf9a5f32398 *inst/doc/simulationStudies.pdf
 2248943be35ee75dee6372f97021fb45 *inst/doc/sleepstudy.R
 0d418208fdaebf63af69141d3abc3fc4 *inst/simulationStudy/breakdown.R
 7ec965d6fc983ed317bc0788d4385521 *inst/simulationStudy/consistencyAndEfficiencyBlockDiagonal.R
@@ -132,7 +132,7 @@ d41a8e3edbc4ff25f4067d146c9d5460 *src/PsiFunction.h
 6b48aaf9349055303b31f2225197eb07 *src/local_stubs.c
 115efebc79254cee761bd350d3cf5c1e *src/misc.cpp
 be548b6825637411f1d6f0d5ea5be5d7 *src/misc.h
-a33113b2862ed69ee98ecfda8fabdc41 *src/rlmerMatrixUtils.cpp
+df643fb43ecaa2495a508a50e3c40ae6 *src/rlmerMatrixUtils.cpp
 28af621518583e9be4b5d3b5cd3f547b *src/rlmerMatrixUtils.h
 458d59a01ae0423654b5fd17fdb3a97a *src/robustlmm_init.cpp
 46f35bfa00a90ac551e1358e47b52725 *tests/DAS-scale.R
