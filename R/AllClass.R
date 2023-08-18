@@ -126,18 +126,19 @@ setRefClass("rlmerPredD",
                      setB.s = function(value) setU(value),
                      setB = function(value) {
                          b.r <<- value
-                         b.s <<- as(stdB(1, Matrix(value)), "numeric")
+                         b.s <<- stdB(value)
                      },
-                     stdB = function(sigma = sigma, matrix, drop=TRUE, t=FALSE) {
-                         ## matrix not given: return sigma-standardized b.s
-                         if (missing(matrix)) return(b.s / sigma)
-                         ## else standardize matrix
-                         ret <- solve(if (t) t(U_b) else U_b, matrix)
-                         ## set infinite, NA, NaN terms to 0 (they correspond to dropped vc)
-                         if (any(idx <- !is.finite(ret@x)))
-                             ret@x[idx] <- 0
-                         if (drop) ret <- drop(ret)
-                         ret/sigma
+                     stdB = function(vector) {
+                         idx <- diag(U_b) == 0.0
+                         if (any(idx)) {
+                             lU_b <- U_b
+                             diag(lU_b)[idx] <- NA_real_
+                             ret <- solve(lU_b, vector)
+                             ret[idx] <- 0
+                         } else {
+                             ret <- solve(U_b, vector)
+                         }
+                         ret
                      },
                      setLambdat = function(value, Lind) {
                          .Lambdat <<- value
@@ -421,7 +422,15 @@ setRefClass("rlmerPredD_DAS",
                              v_e - EDpsi_e * 2 * diagA + Epsi2_e * diagAAt +
                              computeDiagonalOfProduct(as(Btmp, "unpackedMatrix"),
                                                       as(tmp, "unpackedMatrix"))
+                         tooSmall <- tau2 < 0.01
+                         if (any(tooSmall)) {
+                            tau2[tooSmall] <- 0.01
+                            obsString <- createObservationsString(tooSmall)
+                            warning("Detected very small values for tau^2 for ",
+                                    obsString, ". Using 0.01 instead.")
+                         }
                          .tau_e <<- sqrt(tau2)
+                         if (any(is.na(.tau_e))) browser()
                      }
                      if (method == "DAStau") {
                          stmp <- .s(theta = FALSE, pp = .self, B = Btmp)

@@ -1,7 +1,7 @@
 
-R version 4.2.1 (2022-06-23) -- "Funny-Looking Kid"
-Copyright (C) 2022 The R Foundation for Statistical Computing
-Platform: aarch64-apple-darwin20 (64-bit)
+R Under development (unstable) (2023-08-12 r84939) -- "Unsuffered Consequences"
+Copyright (C) 2023 The R Foundation for Statistical Computing
+Platform: aarch64-apple-darwin20
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
@@ -47,10 +47,16 @@ boundary (singular) fit: see help('isSingular')
 [37] "w_sigma_b_vector" "is_REML"         
 > for (nm in nmME) {
 +     cat("\nName:", nm, "\n")
++     value <- getME(rfm, name=nm)
++     if (nm == "theta") {
++         value <- value + 1
++     } else if (nm == "A") {
++         value@x <- value@x + 1
++     }
 +     if (substr(nm, 1, 3) == "rho") {
-+        print(getME(rfm, name=nm))
++        print(value)
 +     } else {
-+        str(getME(rfm, name=nm))
++        str(value)
 +     }
 + }
 
@@ -168,7 +174,7 @@ Formal class 'dgCMatrix' [package "Matrix"] with 6 slots
   ..@ Dimnames:List of 2
   .. ..$ : NULL
   .. ..$ : chr [1:180] "1" "2" "3" "4" ...
-  ..@ x       : num [1:522] 0.967 0 0.982 0.231 0 ...
+  ..@ x       : num [1:522] 1.97 1 1.98 1.23 1 ...
   ..@ factors : list()
 
 Name: U_b 
@@ -199,7 +205,7 @@ Name: beta
  num [1:2] 251.4 10.5
 
 Name: theta 
- Named num [1:4] 0.9667 0.0152 0.2309 0
+ Named num [1:4] 1.97 1.02 1.23 1
  - attr(*, "names")= chr [1:4] "Subject.(Intercept)" "Subject.Days.(Intercept)" "Subject.Days" "Group.(Intercept)"
 
 Name: n_rtrms 
@@ -258,13 +264,13 @@ List of 5
   .. .. ..$ : NULL
   .. ..@ x       : num [1:1600] 9.105 8.529 -0.487 -0.502 -0.487 ...
   .. ..@ factors :List of 1
-  .. .. ..$ LU:Formal class 'denseLU' [package "Matrix"] with 4 slots
-  .. .. .. .. ..@ Dimnames:List of 2
-  .. .. .. .. .. ..$ : NULL
-  .. .. .. .. .. ..$ : NULL
+  .. .. ..$ denseLU:Formal class 'denseLU' [package "Matrix"] with 4 slots
   .. .. .. .. ..@ x       : num [1:1600] 9.105 0.9367 -0.0535 -0.0551 -0.0535 ...
   .. .. .. .. ..@ perm    : int [1:40] 1 2 3 4 5 6 7 8 9 10 ...
   .. .. .. .. ..@ Dim     : int [1:2] 40 40
+  .. .. .. .. ..@ Dimnames:List of 2
+  .. .. .. .. .. ..$ : NULL
+  .. .. .. .. .. ..$ : NULL
  $ M_XZ :Formal class 'dgeMatrix' [package "Matrix"] with 4 slots
   .. ..@ Dim     : int [1:2] 2 40
   .. ..@ Dimnames:List of 2
@@ -282,7 +288,7 @@ List of 5
  $ M_BB :Formal class 'dgeMatrix' [package "Matrix"] with 4 slots
   .. ..@ Dim     : int [1:2] 2 2
   .. ..@ Dimnames:List of 2
-  .. .. ..$ : NULL
+  .. .. ..$ : chr [1:2] "(Intercept)" "Days"
   .. .. ..$ : NULL
   .. ..@ x       : num [1:4] 0.08697 -0.00271 -0.00271 0.00446
   .. ..@ factors : list()
@@ -326,6 +332,7 @@ Name: is_REML
  logi 1
 > g.all <- getME(rfm, "ALL")
 > g.all[grepl("^rho", names(g.all))] <- NULL
+> g.all[["theta"]] <- g.all[["theta"]] + 1
 > str(g.all, max.level = 2)
 List of 34
  $ X               : num [1:180, 1:2] 1 1 1 1 1 1 1 1 1 1 ...
@@ -358,7 +365,7 @@ List of 34
   ..$ Group  : Factor w/ 4 levels "a","b","c","d": 1 2 3 4 1 2 3 4 1 2 ...
   ..- attr(*, "assign")= int [1:2] 1 2
  $ beta            : num [1:2] 251.4 10.5
- $ theta           : Named num [1:4] 0.9667 0.0152 0.2309 0
+ $ theta           : Named num [1:4] 1.97 1.02 1.23 1
   ..- attr(*, "names")= chr [1:4] "Subject.(Intercept)" "Subject.Days.(Intercept)" "Subject.Days" "Group.(Intercept)"
  $ n_rtrms         : int 2
  $ n_rfacs         : int 2
@@ -393,4 +400,4 @@ List of 34
 > 
 > proc.time()
    user  system elapsed 
-  1.479   0.075   1.550 
+  1.142   0.069   1.211 
