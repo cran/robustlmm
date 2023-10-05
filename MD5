@@ -1,6 +1,6 @@
-254222f77d54374eca14d47825100db1 *DESCRIPTION
+80b0b107a8f5a499fec055aeef2b430d *DESCRIPTION
 80d96db426c01dd7e6868c380f33de3a *NAMESPACE
-53790df28752531448cc562b1d4866ea *R/AllClass.R
+e0f438a04647ec18706f082ee2fe40a0 *R/AllClass.R
 9c23e53d9a44511367bd920de7304079 *R/AllGeneric.R
 9cc365ecc78431476fd1489c449359cf *R/DAS-scale.R
 27d13ee0b66b0963a5c81c13f574cecc *R/accessors.R
@@ -31,10 +31,10 @@ c998a71068aa5c8557b380d4fd41a918 *inst/doc/Penicillin.R
 426c20b3fadfee5f14b9b39ee57f685d *inst/doc/plots.R
 8cd357cab2d5ba299addc361f9f0c748 *inst/doc/rlmer.R
 34af96c5afa16d6def1dd03b86760bef *inst/doc/rlmer.Rnw
-130c3d32b35588e832d238ff6647e849 *inst/doc/rlmer.pdf
+1bc3eeb2e920c05bc06aff168476777c *inst/doc/rlmer.pdf
 da8ecd990f3981e5c0ccc6fb725b5e8b *inst/doc/simulationStudies.R
 b2d3529920c74d0813d7183ffaecd571 *inst/doc/simulationStudies.Rnw
-0452537e0a15dd0fdaadc084ba43c39b *inst/doc/simulationStudies.pdf
+361513be13ef24fd8b7b7f6268d49d59 *inst/doc/simulationStudies.pdf
 2248943be35ee75dee6372f97021fb45 *inst/doc/sleepstudy.R
 0d418208fdaebf63af69141d3abc3fc4 *inst/simulationStudy/breakdown.R
 7ec965d6fc983ed317bc0788d4385521 *inst/simulationStudy/consistencyAndEfficiencyBlockDiagonal.R
@@ -132,8 +132,8 @@ d41a8e3edbc4ff25f4067d146c9d5460 *src/PsiFunction.h
 6b48aaf9349055303b31f2225197eb07 *src/local_stubs.c
 115efebc79254cee761bd350d3cf5c1e *src/misc.cpp
 be548b6825637411f1d6f0d5ea5be5d7 *src/misc.h
-5afe05bc99f08f5f15cbeee503d0874f *src/rlmerMatrixUtils.cpp
-28af621518583e9be4b5d3b5cd3f547b *src/rlmerMatrixUtils.h
+87a25836bde4651466e54808d68fda89 *src/rlmerMatrixUtils.cpp
+89de788626b20d64b42056ec95c1a728 *src/rlmerMatrixUtils.h
 458d59a01ae0423654b5fd17fdb3a97a *src/robustlmm_init.cpp
 b027a89301b09e35de6d63a84ee425e7 *tests/DAS-scale.R
 99dbc82347cab4b494384bce4d9962f5 *tests/DASvar-fallback.R
