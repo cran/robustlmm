@@ -1,8 +1,8 @@
 Package: robustlmm
 Type: Package
 Title: Robust Linear Mixed Effects Models
-Version: 3.2-5
-Date: 2023-11-14
+Version: 3.3-1
+Date: 2023-12-10
 Author: Manuel Koller
 Maintainer: Manuel Koller <kollerma@proton.me>
 Description: Implements the Robust Scoring Equations estimator to fit linear
@@ -31,6 +31,6 @@ RcppModules: psi_function_module
 RoxygenNote: 7.2.3
 Config/build/clean-inst-doc: false
 NeedsCompilation: yes
-Packaged: 2023-11-14 19:51:23 UTC; kollerma
+Packaged: 2023-12-10 12:11:17 UTC; kollerma
 Repository: CRAN
-Date/Publication: 2023-11-14 21:20:02 UTC
+Date/Publication: 2023-12-14 23:20:03 UTC

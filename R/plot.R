@@ -4,19 +4,25 @@ globalVariables("theoretical", add=TRUE)
 
 ## internal functions, called via plot.rlmerMod
 ## TA-plots inclusive coloring for weights
-ta <- function(obj, title="") {
+ta <- function(obj, title="", add.line="none", ...) {
     data <- data.frame(fitted = fitted(obj),
                        resid = resid(obj),
                        weights = if (is(obj, "rlmerMod")) getME(obj, "w_e") else 1)
     plt <- ggplot2::ggplot(data, ggplot2::aes(fitted, resid))
+    if (add.line == "below")
+        plt <- plt + ggplot2::geom_hline(yintercept = 0, ...)
     if (title != "") plt <- plt + ggplot2::ggtitle(title)
-    if (is(obj, "rlmerMod"))
-        plt + ggplot2::geom_point(ggplot2::aes(color = weights))
-    else plt + ggplot2::geom_point()
+    plt <-
+        if (is(obj, "rlmerMod"))
+            plt + ggplot2::geom_point(ggplot2::aes(color = weights))
+        else plt + ggplot2::geom_point()
+    if (add.line == "above")
+        plt <- plt + ggplot2::geom_hline(yintercept = 0, ...)
+    plt
 }
 ## QQ-plots inclusive coloring for weights
 qq <- function(obj, type = c("resid", "ranef"), title="",
-               multiply.weights=FALSE) {
+               multiply.weights=FALSE, add.line="none", ...) {
     type <- match.arg(type)
     val0 <- switch(type,
                   resid = list(resid = data.frame(resid=resid(obj))),
@@ -42,11 +48,15 @@ qq <- function(obj, type = c("resid", "ranef"), title="",
         } else 1
     if (multiply.weights) data0$sample <- data0$sample * data0$weights
     plt <- ggplot2::ggplot(data0, ggplot2::aes(theoretical, sample))
+    if (add.line == "below")
+        plt <- plt + ggplot2::geom_qq_line(ggplot2::aes(sample = sample), ...)
     if (title != "") plt <- plt + ggplot2::ggtitle(title)
     plt <-
         if (is(obj, "rlmerMod"))
             plt + ggplot2::geom_point(ggplot2::aes(color = weights))
         else plt + ggplot2::geom_point()
+    if (add.line == "above")
+        plt <- plt + ggplot2::geom_qq_line(ggplot2::aes(sample = sample), ...)
     if (length(levels(data0$level)) > 1) plt + ggplot2::facet_wrap(~ level) else plt
 }
 ## scatterplots for correlated random effects
@@ -93,7 +103,11 @@ rsc <- function(obj, title="") {
 ##' @param multiply.weights multiply the residuals / random effects with the
 ##'   robustness weights when producing the Q-Q plots.
 ##' @param ask waits for user input before displaying each plot.
-##' @param ... currently ignored.
+##' @param add.line add reference line to plots, use \code{"above"} or
+##'   \code{"below"} to show the line above or below the points. Hide the line
+##'   with \code{"none"}.
+##' @param ... passed on to \code{\link[ggplot2]{geom_hline}} and
+##'   \code{\link[ggplot2]{geom_qq_line}}, to customize how the line is drawn.
 ##' @return a list of plots of class \code{\link[ggplot2]{ggplot}} that can be
 ##'   used for further modification before plotting (using \code{print}).
 ##' @seealso \code{\link{getME}}, \code{\link[ggplot2]{ggplot}}
@@ -113,6 +127,7 @@ plot.rlmerMod <- function(x, y=NULL, which=1:4,
                               "Normal Q-Q vs. Random Effects",
                               "Scatterplot of Random Effects for Group \"%s\""),
                           multiply.weights=FALSE,
+                          add.line=c("above", "below", "none"),
                           ...) {
     if (!inherits(x, "rlmerMod") & !inherits(x, "lmerMod"))
         stop("Use only with 'rlmerMod' and 'lmerMod' objects")
@@ -123,16 +138,19 @@ plot.rlmerMod <- function(x, y=NULL, which=1:4,
     if (!is.numeric(which) || any(which < 1) || any(which > 4))
         stop("'which' must be in 1:4")
     show[which] <- TRUE
+    add.line <- match.arg(add.line)
     plots <- list()
 
     if (show[1])
-        plots[[1]] <- ta(x, title=title[1])
+        plots[[1]] <- ta(x, title=title[1], add.line=add.line, ...)
     if (show[2])
         plots <- c(plots, list(qq(x, type="resid", title=title[2],
-                                  multiply.weights=multiply.weights)))
+                                  multiply.weights=multiply.weights,
+                                  add.line=add.line, ...)))
     if (show[3])
         plots <- c(plots, list(qq(x, type="ranef", title=title[3],
-                                  multiply.weights=multiply.weights)))
+                                  multiply.weights=multiply.weights,
+                                  add.line=add.line, ...)))
     if (show[4])
         plots <- c(plots, rsc(x, title=title[4]))
 
