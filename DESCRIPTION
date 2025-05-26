@@ -1,8 +1,8 @@
 Package: robustlmm
 Type: Package
 Title: Robust Linear Mixed Effects Models
-Version: 3.3-2
-Date: 2025-05-04
+Version: 3.3-3
+Date: 2025-05-26
 Author: Manuel Koller [aut, cre]
 Authors@R: person(given = "Manuel", family = "Koller", role = c("aut", "cre"), email = "kollerma@proton.me")
 Maintainer: Manuel Koller <kollerma@proton.me>
@@ -18,7 +18,7 @@ Suggests: ggplot2, reshape2, microbenchmark, emmeans (>= 1.4),
         estimability, lqmm, rlme, MASS, lemon, RColorBrewer, skewt, fs,
         dplyr, ggh4x, testthat, robustvarComp
 Imports: lattice, nlme, methods, robustbase (>= 0.93), xtable, Rcpp (>=
-        0.12.2), fastGHQuad, parallel, rlang, utils
+        0.12.2), fastGHQuad, parallel, rlang, utils, reformulas
 Collate: 'ghq.R' 'psiFunc2.R' 'AllClass.R' 'rlmer.R' 'accessors.R'
         'fromLme4.R' 'DAS-scale.R' 'fit.effects.R' 'helpers.R'
         'AllGeneric.R' 'lmer.R' 'mutators.R' 'plot.R'
@@ -32,6 +32,6 @@ RcppModules: psi_function_module
 RoxygenNote: 7.3.2
 Config/build/clean-inst-doc: false
 NeedsCompilation: yes
-Packaged: 2025-05-04 20:02:32 UTC; kollerma
+Packaged: 2025-05-26 17:43:55 UTC; kollerma
 Repository: CRAN
-Date/Publication: 2025-05-04 21:00:01 UTC
+Date/Publication: 2025-05-26 18:40:03 UTC

@@ -1,5 +1,5 @@
-7ec14f0c7a52be16dcecdf1db632c67e *DESCRIPTION
-94499643e206956796339e7c1054dafa *NAMESPACE
+c07ccbe05716b0272a8883b9eb22e2b3 *DESCRIPTION
+c031948a444ea184c491cc6566a7643a *NAMESPACE
 15e898f9ea6863f8cd5f9a312a8555b3 *R/AllClass.R
 9c23e53d9a44511367bd920de7304079 *R/AllGeneric.R
 9cc365ecc78431476fd1489c449359cf *R/DAS-scale.R
@@ -8,7 +8,7 @@ efbcc81dd96acc26fa38d77dc55a8a3b *R/accessors.R
 c9933a15fcaf848c966709c774fcf71c *R/emmeans.R
 5c4beaf1627ef522a5965e4f39ffeb69 *R/fit.effects.R
 5366576c5c6a1fceb7ee4cf42df8c4ee *R/fitDatasets.R
-de37ca1f53d8c868c68a38246ddeb5d4 *R/fromLme4.R
+de6e0cdf754c18b29871e2049edff49e *R/fromLme4.R
 3e6155bed06c5b06ca104e2f6ccae81d *R/generateAnovaDatasets.R
 426e776649d86b4cce38d668f137a751 *R/generateMixedEffectDatasets.R
 b2632e049db016512e94e94fdaa3d6a6 *R/generateSensitivityCurveDatasets.R
@@ -31,10 +31,10 @@ c998a71068aa5c8557b380d4fd41a918 *inst/doc/Penicillin.R
 426c20b3fadfee5f14b9b39ee57f685d *inst/doc/plots.R
 8cd357cab2d5ba299addc361f9f0c748 *inst/doc/rlmer.R
 34af96c5afa16d6def1dd03b86760bef *inst/doc/rlmer.Rnw
-bafcac7b24f9b4da7be49564eb7259ee *inst/doc/rlmer.pdf
+8d069e3ab2d940524f507689a026d80a *inst/doc/rlmer.pdf
 da8ecd990f3981e5c0ccc6fb725b5e8b *inst/doc/simulationStudies.R
 b2d3529920c74d0813d7183ffaecd571 *inst/doc/simulationStudies.Rnw
-ba02f36058462e59f32bbbfd23aacf6f *inst/doc/simulationStudies.pdf
+502f8d4e50ecd8571353f2d5d1905208 *inst/doc/simulationStudies.pdf
 2248943be35ee75dee6372f97021fb45 *inst/doc/sleepstudy.R
 0d418208fdaebf63af69141d3abc3fc4 *inst/simulationStudy/breakdown.R
 7ec965d6fc983ed317bc0788d4385521 *inst/simulationStudy/consistencyAndEfficiencyBlockDiagonal.R
@@ -135,7 +135,7 @@ be548b6825637411f1d6f0d5ea5be5d7 *src/misc.h
 c31cd204c638ff42ceae2ce2816d29bf *src/rlmerMatrixUtils.cpp
 89de788626b20d64b42056ec95c1a728 *src/rlmerMatrixUtils.h
 458d59a01ae0423654b5fd17fdb3a97a *src/robustlmm_init.cpp
-b027a89301b09e35de6d63a84ee425e7 *tests/DAS-scale.R
+15a5e41e7afa2f1dd893a29069dc7c72 *tests/DAS-scale.R
 99dbc82347cab4b494384bce4d9962f5 *tests/DASvar-fallback.R
 1d5cfe7812a83fc741d2609c96005c28 *tests/PsiFunction.R
 375859a0fc7f5f1678a99001f9596c88 *tests/asymptoticEfficiency.R
