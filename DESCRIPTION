@@ -1,8 +1,8 @@
 Package: robustlmm
 Type: Package
 Title: Robust Linear Mixed Effects Models
-Version: 3.3-3
-Date: 2025-05-26
+Version: 3.4-2
+Date: 2026-01-28
 Author: Manuel Koller [aut, cre]
 Authors@R: person(given = "Manuel", family = "Koller", role = c("aut", "cre"), email = "kollerma@proton.me")
 Maintainer: Manuel Koller <kollerma@proton.me>
@@ -16,22 +16,23 @@ LazyLoad: yes
 Depends: lme4 (>= 1.1-9), Matrix (>= 1.6-2), R (>= 3.5.0)
 Suggests: ggplot2, reshape2, microbenchmark, emmeans (>= 1.4),
         estimability, lqmm, rlme, MASS, lemon, RColorBrewer, skewt, fs,
-        dplyr, ggh4x, testthat, robustvarComp
+        dplyr, ggh4x, testthat, robustvarComp, confintROB
 Imports: lattice, nlme, methods, robustbase (>= 0.93), xtable, Rcpp (>=
         0.12.2), fastGHQuad, parallel, rlang, utils, reformulas
 Collate: 'ghq.R' 'psiFunc2.R' 'AllClass.R' 'rlmer.R' 'accessors.R'
         'fromLme4.R' 'DAS-scale.R' 'fit.effects.R' 'helpers.R'
         'AllGeneric.R' 'lmer.R' 'mutators.R' 'plot.R'
-        'generateAnovaDatasets.R' 'generateMixedEffectDatasets.R'
+        'generateAnovaDatasets.R' 'generateLongitudinalDatasets.R'
+        'plotLongitudinalBySubject.R' 'generateMixedEffectDatasets.R'
         'generateSensitivityCurveDatasets.R' 'manageDatasets.R'
         'fitDatasets.R' 'processFit.R' 'processFile.R'
         'simulationStudies.R' 'asymptoticEfficiency.R' 'emmeans.R'
 LinkingTo: Rcpp, robustbase, Matrix
 Encoding: UTF-8
 RcppModules: psi_function_module
-RoxygenNote: 7.3.2
+RoxygenNote: 7.3.3
 Config/build/clean-inst-doc: false
 NeedsCompilation: yes
-Packaged: 2025-05-26 17:43:55 UTC; kollerma
+Packaged: 2026-01-28 18:06:38 UTC; kollerma
 Repository: CRAN
-Date/Publication: 2025-05-26 18:40:03 UTC
+Date/Publication: 2026-01-28 18:50:08 UTC
