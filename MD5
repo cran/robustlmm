@@ -1,4 +1,4 @@
-d856f632cc3a3077e87fd1f7d4e70d2b *DESCRIPTION
+bbe4c4cfb43b7ae1b94e22c14f18e8e9 *DESCRIPTION
 9dd7ad2bbb02cbbf1a00064157500c59 *NAMESPACE
 0fa84616f26cf3d61cedc6f53159eec6 *R/AllClass.R
 9c23e53d9a44511367bd920de7304079 *R/AllGeneric.R
@@ -15,7 +15,7 @@ de6e0cdf754c18b29871e2049edff49e *R/fromLme4.R
 b2632e049db016512e94e94fdaa3d6a6 *R/generateSensitivityCurveDatasets.R
 d4283e34cc78af1e95f185b100fd1b15 *R/ghq.R
 3a1079c7524120001bf003fdf5ec5a89 *R/helpers.R
-24c2128614f2564e26406340d0df8ea0 *R/lmer.R
+39758f66688d17d38ca2a8855dd70407 *R/lmer.R
 23c0eda6d4b28c8ecb152799b9bf2991 *R/manageDatasets.R
 7e4c3e4277e203b3a792cb1bef818b0f *R/mutators.R
 885961e8768c3c21f27c29a954f5341c *R/plot.R
@@ -23,9 +23,9 @@ d4283e34cc78af1e95f185b100fd1b15 *R/ghq.R
 de04672b34a9268b740fdebdaab3d7d8 *R/processFile.R
 f7c7b698f68e21bdc7ada24fc09ae3b6 *R/processFit.R
 d5b11cba6860e30b2b7cdd248e5696f3 *R/psiFunc2.R
-2952a99e4e7e81703c20976bc6866b34 *R/rlmer.R
+20aa7c13ab3a79ad26e5622e9bf2bee7 *R/rlmer.R
 d8ee8bb77692142463e08ebdb6b6d03f *R/simulationStudies.R
-0f36af014af7e656bf69be150c3b818e *README.md
+39809d3dcc7cb9244809ffc994b46948 *README.md
 600b071339a8e74e950cd903ff534cd2 *build/vignette.rds
 e21514a5d035305feb87d0c632a2fd0c *inst/CITATION
 c998a71068aa5c8557b380d4fd41a918 *inst/doc/Penicillin.R
@@ -33,10 +33,10 @@ c998a71068aa5c8557b380d4fd41a918 *inst/doc/Penicillin.R
 426c20b3fadfee5f14b9b39ee57f685d *inst/doc/plots.R
 8cd357cab2d5ba299addc361f9f0c748 *inst/doc/rlmer.R
 c03a22f88ac987d7272dcf9eeeeeeb4e *inst/doc/rlmer.Rnw
-de25182ab1039b24a72e31c00ba6965b *inst/doc/rlmer.pdf
+74c3d1c5f81635d6ebd355fb01a6dc73 *inst/doc/rlmer.pdf
 da8ecd990f3981e5c0ccc6fb725b5e8b *inst/doc/simulationStudies.R
 b2d3529920c74d0813d7183ffaecd571 *inst/doc/simulationStudies.Rnw
-d9c1bbcdb5c4f54932a1506ad0454188 *inst/doc/simulationStudies.pdf
+eaffd9e13ed3b9b466a5293d07fe5e22 *inst/doc/simulationStudies.pdf
 2248943be35ee75dee6372f97021fb45 *inst/doc/sleepstudy.R
 0d418208fdaebf63af69141d3abc3fc4 *inst/simulationStudy/breakdown.R
 7ec965d6fc983ed317bc0788d4385521 *inst/simulationStudy/consistencyAndEfficiencyBlockDiagonal.R
@@ -130,12 +130,12 @@ bae27aefdf04b213261c95cb05dcafe4 *src/Integration.cpp
 18472c2fb01b39a33d53bec049b83302 *src/Integration.h
 b4fa667b9cdfd29bbe921c1881e665ae *src/Makevars
 b4fa667b9cdfd29bbe921c1881e665ae *src/Makevars.win
-4a2565f28a4afff2225cf5d8d988e18c *src/PsiFunction.cpp
+55bc73c161613d82178416366ea50bc7 *src/PsiFunction.cpp
 d41a8e3edbc4ff25f4067d146c9d5460 *src/PsiFunction.h
 52304abbf6503ef6c98f4bcc5af214ab *src/globals.h
 6b48aaf9349055303b31f2225197eb07 *src/local_stubs.c
 115efebc79254cee761bd350d3cf5c1e *src/misc.cpp
-be548b6825637411f1d6f0d5ea5be5d7 *src/misc.h
+3cbd0c3377b5ee17dffcb93733909dd1 *src/misc.h
 c31cd204c638ff42ceae2ce2816d29bf *src/rlmerMatrixUtils.cpp
 89de788626b20d64b42056ec95c1a728 *src/rlmerMatrixUtils.h
 458d59a01ae0423654b5fd17fdb3a97a *src/robustlmm_init.cpp

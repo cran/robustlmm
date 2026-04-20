@@ -1,8 +1,8 @@
 Package: robustlmm
 Type: Package
 Title: Robust Linear Mixed Effects Models
-Version: 3.4-2
-Date: 2026-01-28
+Version: 3.4-3
+Date: 2026-04-20
 Author: Manuel Koller [aut, cre]
 Authors@R: person(given = "Manuel", family = "Koller", role = c("aut", "cre"), email = "kollerma@proton.me")
 Maintainer: Manuel Koller <kollerma@proton.me>
@@ -13,7 +13,7 @@ Description: Implements the Robust Scoring Equations estimator to fit linear
 License: GPL-2
 URL: https://github.com/kollerma/robustlmm
 LazyLoad: yes
-Depends: lme4 (>= 1.1-9), Matrix (>= 1.6-2), R (>= 3.5.0)
+Depends: lme4 (>= 2.0-1), Matrix (>= 1.6-2), R (>= 3.5.0)
 Suggests: ggplot2, reshape2, microbenchmark, emmeans (>= 1.4),
         estimability, lqmm, rlme, MASS, lemon, RColorBrewer, skewt, fs,
         dplyr, ggh4x, testthat, robustvarComp, confintROB
@@ -33,6 +33,6 @@ RcppModules: psi_function_module
 RoxygenNote: 7.3.3
 Config/build/clean-inst-doc: false
 NeedsCompilation: yes
-Packaged: 2026-01-28 18:06:38 UTC; kollerma
+Packaged: 2026-04-20 18:50:26 UTC; kollerma
 Repository: CRAN
-Date/Publication: 2026-01-28 18:50:08 UTC
+Date/Publication: 2026-04-20 20:50:03 UTC
