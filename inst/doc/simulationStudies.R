@@ -13,13 +13,13 @@ theme_set(theme)
 
 
 ###################################################
-### code chunk number 2: simulationStudies.Rnw:98-99 (eval = FALSE)
+### code chunk number 2: simulationStudies.Rnw:99-100 (eval = FALSE)
 ###################################################
 ## robustlmm::viewCopyOfSimulationStudy("sensitivityCurves.R")
 
 
 ###################################################
-### code chunk number 3: simulationStudies.Rnw:112-113 (eval = FALSE)
+### code chunk number 3: simulationStudies.Rnw:113-114 (eval = FALSE)
 ###################################################
 ## remotes::install_github("kollerma/robustlmm", "full-results")
 
@@ -113,89 +113,112 @@ print(plot_breakdown)
 
 
 ###################################################
-### code chunk number 17: source-convergence-code
+### code chunk number 17: source-breakdownMC-code
+###################################################
+source(system.file("simulationStudy/breakdownMC.R",
+                   package = "robustlmm"))
+
+
+###################################################
+### code chunk number 18: plot_breakdownMC_dyestuff
+###################################################
+print(plot_breakdownMC_dyestuff)
+
+
+###################################################
+### code chunk number 19: plot_breakdownMC_penicillin
+###################################################
+print(plot_breakdownMC_penicillin)
+
+
+###################################################
+### code chunk number 20: plot_breakdownMC_sleepstudy
+###################################################
+print(plot_breakdownMC_sleepstudy)
+
+
+###################################################
+### code chunk number 21: source-convergence-code
 ###################################################
 source(system.file("simulationStudy/convergence.R",
                    package = "robustlmm"))
 
 
 ###################################################
-### code chunk number 18: plot_convergence_N_N_bias
+### code chunk number 22: plot_convergence_N_N_bias
 ###################################################
 print(plot_convergence_N_N_bias)
 
 
 ###################################################
-### code chunk number 19: plot_convergence_N_N_scale
+### code chunk number 23: plot_convergence_N_N_scale
 ###################################################
 print(plot_convergence_N_N_scale)
 
 
 ###################################################
-### code chunk number 20: plot_convergence_N_N_efficiency
+### code chunk number 24: plot_convergence_N_N_efficiency
 ###################################################
 print(plot_convergence_N_N_efficiency)
 
 
 ###################################################
-### code chunk number 21: plot_convergence_t3_t3_bias
+### code chunk number 25: plot_convergence_t3_t3_bias
 ###################################################
 print(plot_convergence_t3_t3_bias)
 
 
 ###################################################
-### code chunk number 22: plot_convergence_t3_t3_scale
+### code chunk number 26: plot_convergence_t3_t3_scale
 ###################################################
 print(plot_convergence_t3_t3_scale)
 
 
 ###################################################
-### code chunk number 23: plot_convergence_t3_t3_efficiency
+### code chunk number 27: plot_convergence_t3_t3_efficiency
 ###################################################
 print(plot_convergence_t3_t3_efficiency)
 
 
 ###################################################
-### code chunk number 24: source-robustness-diagonal-code
+### code chunk number 28: source-robustness-diagonal-code
 ###################################################
 source(system.file("simulationStudy/robustnessDiagonal.R",
                    package = "robustlmm"))
 
 
 ###################################################
-### code chunk number 25: plot_robustnessDiagonal
+### code chunk number 29: plot_robustnessDiagonal
 ###################################################
 print(plot_robustnessDiagonal)
 
 
 ###################################################
-### code chunk number 26: plot_coverageDiagonal
+### code chunk number 30: plot_coverageDiagonal
 ###################################################
 print(plot_coverageDiagonal)
 
 
 ###################################################
-### code chunk number 27: source-robustness-block-diagonal-code
+### code chunk number 31: source-robustness-block-diagonal-code
 ###################################################
 source(system.file("simulationStudy/robustnessBlockDiagonal.R",
                    package = "robustlmm"))
 
 
 ###################################################
-### code chunk number 28: plot_robustnessBlockDiagonal
+### code chunk number 32: plot_robustnessBlockDiagonal
 ###################################################
 print(plot_robustnessBlockDiagonal)
 
 
 ###################################################
-### code chunk number 29: plot_violinBlockDiagonal
+### code chunk number 33: plot_violinBlockDiagonal
 ###################################################
 print(plot_violinBlockDiagonal)
 
 
 ###################################################
-### code chunk number 30: sessionInfo
+### code chunk number 34: sessionInfo
 ###################################################
 sub("robustlmm~03.0", "robustlmm~3.0", sub("/Resources", "/|\n\\\\verb|Resources", attr(results, "sessionInfo")))
-
-
