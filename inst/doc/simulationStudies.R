@@ -10,16 +10,22 @@ require(ggplot2)
 theme <- theme_bw(base_size = 9)
 theme$legend.position = "top"
 theme_set(theme)
+## Headline numbers for the "new in 3.5.0" studies are precomputed from
+## the simulation results into this shipped RDS (by
+## vignettes/precompute-3.5.0.R) and pulled in with \Sexpr{}, so they
+## always match the studies and are never hand-typed.
+nums <- readRDS("robustlmm-3.5.0-numbers.rds")
+fmt <- function(x, digits = 2) formatC(x, format = "f", digits = digits)
 
 
 ###################################################
-### code chunk number 2: simulationStudies.Rnw:99-100 (eval = FALSE)
+### code chunk number 2: simulationStudies.Rnw:111-112 (eval = FALSE)
 ###################################################
 ## robustlmm::viewCopyOfSimulationStudy("sensitivityCurves.R")
 
 
 ###################################################
-### code chunk number 3: simulationStudies.Rnw:113-114 (eval = FALSE)
+### code chunk number 3: simulationStudies.Rnw:125-126 (eval = FALSE)
 ###################################################
 ## remotes::install_github("kollerma/robustlmm", "full-results")
 
