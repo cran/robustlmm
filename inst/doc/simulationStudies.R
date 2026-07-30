@@ -19,13 +19,13 @@ fmt <- function(x, digits = 2) formatC(x, format = "f", digits = digits)
 
 
 ###################################################
-### code chunk number 2: simulationStudies.Rnw:111-112 (eval = FALSE)
+### code chunk number 2: simulationStudies.Rnw:112-113 (eval = FALSE)
 ###################################################
 ## robustlmm::viewCopyOfSimulationStudy("sensitivityCurves.R")
 
 
 ###################################################
-### code chunk number 3: simulationStudies.Rnw:125-126 (eval = FALSE)
+### code chunk number 3: simulationStudies.Rnw:126-127 (eval = FALSE)
 ###################################################
 ## remotes::install_github("kollerma/robustlmm", "full-results")
 

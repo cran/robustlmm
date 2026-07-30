@@ -1,8 +1,8 @@
 Package: robustlmm
 Type: Package
 Title: Robust Linear Mixed Effects Models
-Version: 3.5.0-1
-Date: 2026-07-10
+Version: 3.5.0-2
+Date: 2026-07-30
 Author: Manuel Koller [aut, cre]
 Authors@R: person(given = "Manuel", family = "Koller", role = c("aut", "cre"), email = "kollerma@proton.me")
 Maintainer: Manuel Koller <kollerma@proton.me>
@@ -35,9 +35,9 @@ Collate: 'ghq.R' 'psiFunc2.R' 'redescendingPsi.R' 'AllClass.R'
 LinkingTo: Rcpp, robustbase, Matrix
 Encoding: UTF-8
 RcppModules: psi_function_module
-RoxygenNote: 7.3.3
 Config/build/clean-inst-doc: false
+Config/roxygen2/version: 8.0.0
 NeedsCompilation: yes
-Packaged: 2026-07-10 13:11:50 UTC; kollerma
+Packaged: 2026-07-30 09:55:53 UTC; kollerma
 Repository: CRAN
-Date/Publication: 2026-07-10 13:50:02 UTC
+Date/Publication: 2026-07-30 15:00:02 UTC
