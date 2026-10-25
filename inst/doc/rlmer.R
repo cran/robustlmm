@@ -4,6 +4,10 @@
 ### code chunk number 1: init-hidden
 ###################################################
 options(width = 60, str = strOptions(vec.len = 1.4), prompt = 'R> ', continue = '+  ')
+## Numbers quoted from the simulation studies come from this shipped RDS
+## (written by vignettes/precompute-3.5.0.R) via \Sexpr{}.
+nums <- readRDS("robustlmm-3.5.0-numbers.rds")
+fmt <- function(x, digits = 2) formatC(x, format = "f", digits = digits)
 
 
 ###################################################
